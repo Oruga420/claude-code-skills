@@ -12,6 +12,7 @@ A collection of reusable skills for [Claude Code](https://docs.anthropic.com/en/
 | [liquid-glass-design](./liquid-glass-design/) | iOS 26 Liquid Glass design system — dynamic glass material with blur, reflection, and interactive morphing for SwiftUI, UIKit, and WidgetKit. |
 | [long-running-harness](./long-running-harness/) | Multi-agent harness for long-running apps: Planner->Generator->Evaluator loop with context resets, sprint contracts, file-based handoffs, and calibrated QA. Based on [Anthropic's harness design patterns](https://www.anthropic.com/engineering/harness-design-long-running-apps). |
 | [plankton-code-quality](./plankton-code-quality/) | Write-time code quality enforcement using Plankton — auto-formatting, linting, and Claude-powered fixes on every file edit via hooks. |
+| [psmux](./psmux/) | Toggle psmux (terminal multiplexer) for Claude Code Agent Teams. Installs psmux and enables Agent Teams automatically. |
 | [refresh-google-tokens](./refresh-google-tokens/) | Refresh both Google Cloud CLI auth and Application Default Credentials (ADC) in one step. Fixes expired token errors for gcloud commands and Python code. |
 | [swift-concurrency-6-2](./swift-concurrency-6-2/) | Swift 6.2 Approachable Concurrency — single-threaded by default, `@concurrent` for explicit background offloading, isolated conformances for main actor types. |
 | [swiftui-patterns](./swiftui-patterns/) | SwiftUI architecture patterns, state management with `@Observable`, view composition, navigation, performance optimization, and modern iOS/macOS UI best practices. |

@@ -1,6 +1,6 @@
 # Claude Code Skills & Commands
 
-A curated collection of **77 skills** and **43 slash commands** for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), the AI-powered CLI by Anthropic. Built on top of the [Everything Claude Code (ECC)](https://github.com/nicobailey/everything-claude-code) ecosystem.
+A curated collection of **79 skills** and **43 slash commands** for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), the AI-powered CLI by Anthropic. Built on top of the [Everything Claude Code (ECC)](https://github.com/nicobailey/everything-claude-code) ecosystem.
 
 Skills teach Claude domain-specific patterns, workflows, and best practices. Commands give you one-word shortcuts to trigger complex workflows.
 
@@ -151,6 +151,7 @@ Once installed, Claude Code auto-detects skills when relevant. You can also invo
 | [investor-materials](./investor-materials/) | Create pitch decks, one-pagers, investor memos, accelerator applications, and financial models |
 | [investor-outreach](./investor-outreach/) | Draft cold emails, warm intros, follow-ups, and investor communications for fundraising |
 | [market-research](./market-research/) | Conduct market research, competitive analysis, investor due diligence, and industry intelligence |
+| [suno-creator](./suno-creator/) | Generate Suno AI-ready song output — style prompt, lyrics, title, and production context from a song concept |
 
 ### Claude Code Tooling
 
@@ -164,6 +165,7 @@ Once installed, Claude Code auto-detects skills when relevant. You can also invo
 | [strategic-compact](./strategic-compact/) | Suggests manual context compaction at logical intervals to preserve context through task phases |
 | [ultraplan](./ultraplan/) | Deep multi-agent exploration and planning — spawns parallel research agents before building comprehensive execution plans |
 | [search-first](./search-first/) | Research-before-coding workflow. Search for existing tools, libraries, and patterns before writing custom code |
+| [skill-shed](./skill-shed/) | Search the GitHub skill backlog for skills not installed locally — fallback when local skills don't cover a domain |
 
 ### Design Patterns & Reference
 

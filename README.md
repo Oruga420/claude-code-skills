@@ -1,6 +1,6 @@
 # Claude Code Skills & Commands
 
-A curated collection of **76 skills** and **43 slash commands** for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), the AI-powered CLI by Anthropic. Built on top of the [Everything Claude Code (ECC)](https://github.com/nicobailey/everything-claude-code) ecosystem.
+A curated collection of **77 skills** and **43 slash commands** for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), the AI-powered CLI by Anthropic. Built on top of the [Everything Claude Code (ECC)](https://github.com/nicobailey/everything-claude-code) ecosystem.
 
 Skills teach Claude domain-specific patterns, workflows, and best practices. Commands give you one-word shortcuts to trigger complex workflows.
 
@@ -52,8 +52,6 @@ Once installed, Claude Code auto-detects skills when relevant. You can also invo
 | [long-running-harness](./long-running-harness/) | Multi-agent harness for long-running apps: Planner->Generator->Evaluator loop with context resets and sprint contracts |
 | [nanoclaw-repl](./nanoclaw-repl/) | Operate and extend NanoClaw v2, ECC's zero-dependency session-aware REPL built on `claude -p` |
 | [ralphinho-rfc-pipeline](./ralphinho-rfc-pipeline/) | RFC-driven multi-agent DAG execution pattern with quality gates, merge queues, and work unit orchestration |
-| [session-insights](./session-insights/) | Analyze your Claude Code session history to generate usage insights, friction analysis, and personalized suggestions |
-| [ultraplan](./ultraplan/) | Deep multi-agent exploration and planning for complex tasks. Spawns parallel research agents before building a comprehensive execution plan |
 
 ### Backend & Databases
 
@@ -142,6 +140,7 @@ Once installed, Claude Code auto-detects skills when relevant. You can also invo
 |-------|-------------|
 | [security-review](./security-review/) | Comprehensive security checklist and patterns for authentication, user input, secrets, API endpoints, and payments |
 | [security-scan](./security-scan/) | Scan your Claude Code `.claude/` directory for vulnerabilities, misconfigurations, and injection risks |
+| [st3gg](./st3gg/) | Steganography toolkit — encode text/files into images, decode hidden data, and analyze images for steganographic content |
 
 ### Content & Business
 

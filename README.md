@@ -52,6 +52,8 @@ Once installed, Claude Code auto-detects skills when relevant. You can also invo
 | [long-running-harness](./long-running-harness/) | Multi-agent harness for long-running apps: Planner->Generator->Evaluator loop with context resets and sprint contracts |
 | [nanoclaw-repl](./nanoclaw-repl/) | Operate and extend NanoClaw v2, ECC's zero-dependency session-aware REPL built on `claude -p` |
 | [ralphinho-rfc-pipeline](./ralphinho-rfc-pipeline/) | RFC-driven multi-agent DAG execution pattern with quality gates, merge queues, and work unit orchestration |
+| [session-insights](./session-insights/) | Analyze your Claude Code session history to generate usage insights, friction analysis, and personalized suggestions |
+| [ultraplan](./ultraplan/) | Deep multi-agent exploration and planning for complex tasks. Spawns parallel research agents before building a comprehensive execution plan |
 
 ### Backend & Databases
 

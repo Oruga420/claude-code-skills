@@ -225,3 +225,52 @@ Use the output to inform:
 - Anti-patterns to avoid
 
 This SUPPLEMENTS the brand bible — the brand bible defines WHAT the brand looks like, the design system defines HOW to make it look professional.
+
+## Step 6 — Generate Extended Design Tokens (spacing, shadows, animations)
+
+The brand-tokens.ts covers colors and fonts from the brand bible. But professional sites also need consistent **spacing scales, shadow depth, animation timing, and z-index management**.
+
+Run the design token generator to fill these gaps:
+
+```bash
+python3 ~/.claude/skills/ui-design-system/scripts/design_token_generator.py "{primary_hex}" "{style}"
+```
+
+Where `{style}` matches the aesthetic direction:
+- `modern` — clean lines, geometric
+- `classic` — traditional, serif-heavy
+- `playful` — rounded, bouncy, colorful
+
+**Use from the output:**
+- `spacing` — 8pt grid system (use instead of arbitrary px values)
+- `shadows` — elevation scale (sm → 2xl) for consistent depth
+- `animation` — timing and easing tokens (fast: 150ms, normal: 300ms, slow: 500ms)
+- `z-index` — layer scale (dropdown: 10, sticky: 20, modal: 30, toast: 50)
+- `borders` — radius scale consistent with brand bible
+
+**IGNORE from the output:**
+- `typography.fontFamily` — use brand bible fonts ONLY (the generator defaults to Inter/Playfair which are BANNED)
+- `colors` — use brand bible colors ONLY (the generator creates generic palettes)
+
+Add the useful tokens to `brand-tokens.ts`:
+```typescript
+// Extended tokens (from design token generator)
+elevation: {
+  sm: '0 1px 2px rgba(0,0,0,0.05)',
+  md: '0 4px 6px rgba(0,0,0,0.1)',
+  lg: '0 10px 15px rgba(0,0,0,0.1)',
+  xl: '0 20px 25px rgba(0,0,0,0.15)',
+},
+timing: {
+  fast: '150ms',
+  normal: '300ms',
+  slow: '500ms',
+  easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+},
+zIndex: {
+  dropdown: 10,
+  sticky: 20,
+  modal: 30,
+  toast: 50,
+},
+```

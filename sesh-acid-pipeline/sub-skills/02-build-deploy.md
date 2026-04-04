@@ -65,7 +65,8 @@ If any check fails, re-run the brand bible agent (including `sub-skill-people.md
 1. Read `build/{lead-slug}/brand-bible/brand-bible.json` cover to cover
 2. Read `build/{lead-slug}/brand-bible/design-directives.md` cover to cover
 3. Read `skills/03-design-personality.md` — answer the 5 personality questions, choose Layout Personality (A/B/C/D)
-4. Run the 3 sub-skill reviews (mandatory, in order):
+4. Run the 4 sub-skill reviews (mandatory, in order):
+   - **`skills/sub-skill-design-quality.md`** — FIRST. Anti-template gate. Choose bold aesthetic direction, define the "one thing," apply layout composition rules, psychology-driven conversion elements. Run `ui-ux-pro-max` design system generator.
    - **`skills/sub-skill-designer.md`** — color, typography, layout personality check
    - **`skills/sub-skill-ui.md`** — header/logo contrast, buttons, images, footer, watermark
    - **`skills/sub-skill-ux.md`** — above-fold clarity, CTA hierarchy, real content, mobile

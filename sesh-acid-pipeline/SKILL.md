@@ -386,7 +386,8 @@ Build a modern Next.js redesign that respects the brand identity, deploy to Verc
    - **B) GALLERY-FORWARD** — portfolio businesses. Gallery above fold, edge-to-edge images, asymmetric grids, minimal text.
    - **C) AUTHORITY** — trust-driven services. "Why trust us?" hero, structural social proof, pricing tables.
    - **D) NEIGHBORHOOD** — foot-traffic/local. Address+hours in hero, space photos, local language, warm textures, featured map.
-4. Run 3 sub-skill reviews (in order):
+4. Run 4 sub-skill reviews (in order):
+   - **`sub-skill-design-quality.md`** — FIRST. Anti-template gate. Choose bold aesthetic direction, name the "one thing" that makes this site memorable, design psychology, layout composition rules. Run `ui-ux-pro-max` design system generator.
    - **`sub-skill-designer.md`** — color, typography, layout personality, brand fidelity, visual content check
    - **`sub-skill-ui.md`** — header/logo contrast, buttons, team photos, gallery images, cards, footer, watermark
    - **`sub-skill-ux.md`** — above-fold clarity, CTA hierarchy, real content, accessibility, mobile, trust signals
@@ -738,6 +739,7 @@ Run from pipeline root: `node karpathy_score.mjs {slug}`
 | `skills/sub-skill-people.md` | Find real person photos | Phase 2.5 |
 | `skills/02-build-deploy.md` | Build + deploy website | Phase 3 |
 | `skills/03-design-personality.md` | Choose layout personality | Phase 3 (pre-build) |
+| `skills/sub-skill-design-quality.md` | Anti-template gate + design psychology | Phase 3 (pre-build, FIRST) |
 | `skills/sub-skill-designer.md` | Color/typography/layout review | Phase 3 (pre-build) |
 | `skills/sub-skill-ui.md` | UI component review | Phase 3 (pre-build) |
 | `skills/sub-skill-ux.md` | UX/accessibility review | Phase 3 (pre-build) |

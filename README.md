@@ -33,11 +33,19 @@ Once installed, Claude Code auto-detects skills when relevant. You can also invo
 
 ## Skills
 
+### 📚 LLM Wiki & Knowledge Systems
+
+Persistent, compounding knowledge bases powered by LLMs. Inspired by [Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) — instead of re-deriving knowledge from scratch every session, these skills build a wiki that gets richer over time.
+
+| Skill | Description |
+|-------|-------------|
+| [arise](./arise/) | Bootstrap a Karpathy-style persistent wiki inside any project. **Personal mode**: weekly tasks with carry-over, goals, habits, and chat history mining. **Laboral mode**: PRDs, call transcripts, org hierarchy, positions, work projects. Supports OpenClaw, NanoClaw, and NemoClaw harnesses. Wires `/compact` to auto-update the wiki every session |
+| [karpathy](./karpathy/) | Autonomous research and experimentation loop inspired by Karpathy's autoresearch. Deploys a 4-agent team (Researcher, Executor, Analyst, Lead) to continuously optimize any measurable metric |
+
 ### AI & Agent Patterns
 
 | Skill | Description |
 |-------|-------------|
-| [arise](./arise/) | Bootstrap a persistent Karpathy-style LLM wiki inside any project. Asks if the project is **Personal** (weekly tasks with carry-over, goals, habits, chat history mining) or **Laboral** (PRDs, call transcripts, org hierarchy, positions, work projects). Supports OpenClaw, NanoClaw, and NemoClaw harnesses. Wires `/compact` to auto-update the wiki every session |
 | [agent-harness-construction](./agent-harness-construction/) | Design and optimize AI agent action spaces, tool definitions, and observation formatting for higher completion rates |
 | [agentic-engineering](./agentic-engineering/) | Operate as an agentic engineer using eval-first execution, decomposition, and cost-aware model routing |
 | [ai-first-engineering](./ai-first-engineering/) | Engineering operating model for teams where AI agents generate a large share of implementation output |
@@ -49,7 +57,6 @@ Once installed, Claude Code auto-detects skills when relevant. You can also invo
 | [enterprise-agent-ops](./enterprise-agent-ops/) | Operate long-lived agent workloads with observability, security boundaries, and lifecycle management |
 | [eval-harness](./eval-harness/) | Formal evaluation framework for Claude Code sessions implementing eval-driven development (EDD) principles |
 | [iterative-retrieval](./iterative-retrieval/) | Pattern for progressively refining context retrieval to solve the subagent context problem |
-| [karpathy](./karpathy/) | Autonomous research and experimentation loop inspired by Karpathy's autoresearch. Deploys a 4-agent team to continuously optimize any measurable metric |
 | [long-running-harness](./long-running-harness/) | Multi-agent harness for long-running apps: Planner->Generator->Evaluator loop with context resets and sprint contracts |
 | [nanoclaw-repl](./nanoclaw-repl/) | Operate and extend NanoClaw v2, ECC's zero-dependency session-aware REPL built on `claude -p` |
 | [ralphinho-rfc-pipeline](./ralphinho-rfc-pipeline/) | RFC-driven multi-agent DAG execution pattern with quality gates, merge queues, and work unit orchestration |

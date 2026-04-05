@@ -37,7 +37,7 @@ Once installed, Claude Code auto-detects skills when relevant. You can also invo
 
 | Skill | Description |
 |-------|-------------|
-| [arise](./arise/) | Bootstrap a persistent Karpathy-style LLM wiki inside any project. Detects new vs existing projects, gathers context via Q&A or codebase scan, builds `.claude/wiki/` with onboarding/Q&A/task-tracking support for OpenClaw, NanoClaw, and NemoClaw harnesses. Wires `/compact` to auto-update the wiki every session |
+| [arise](./arise/) | Bootstrap a persistent Karpathy-style LLM wiki inside any project. Asks if the project is **Personal** (weekly tasks with carry-over, goals, habits, chat history mining) or **Laboral** (PRDs, call transcripts, org hierarchy, positions, work projects). Supports OpenClaw, NanoClaw, and NemoClaw harnesses. Wires `/compact` to auto-update the wiki every session |
 | [agent-harness-construction](./agent-harness-construction/) | Design and optimize AI agent action spaces, tool definitions, and observation formatting for higher completion rates |
 | [agentic-engineering](./agentic-engineering/) | Operate as an agentic engineer using eval-first execution, decomposition, and cost-aware model routing |
 | [ai-first-engineering](./ai-first-engineering/) | Engineering operating model for teams where AI agents generate a large share of implementation output |

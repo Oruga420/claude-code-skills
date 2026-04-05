@@ -601,6 +601,7 @@
     }
 
     /* === CATEGORY COLORS === */
+    .cat-llmwiki .category-icon { background: rgba(245, 158, 11, 0.1); color: #fbbf24; }
     .cat-ai .category-icon { background: rgba(99, 102, 241, 0.1); color: #818cf8; }
     .cat-backend .category-icon { background: rgba(6, 182, 212, 0.1); color: #22d3ee; }
     .cat-java .category-icon { background: rgba(249, 115, 22, 0.1); color: #fb923c; }
@@ -624,6 +625,7 @@
     .cat-commands-loops .category-icon { background: rgba(250, 204, 21, 0.1); color: #fde047; }
     .cat-commands-tools .category-icon { background: rgba(148, 163, 184, 0.1); color: #94a3b8; }
 
+    .cat-llmwiki .skill-dot { background: #fbbf24; }
     .cat-ai .skill-dot { background: #818cf8; }
     .cat-backend .skill-dot { background: #22d3ee; }
     .cat-java .skill-dot { background: #fb923c; }
@@ -665,6 +667,7 @@
       <span class="nav-title">Claude Code Skills</span>
     </a>
     <div class="nav-links">
+      <a href="#llmwiki">LLM Wiki</a>
       <a href="#skills">Skills</a>
       <a href="#commands">Commands</a>
       <a href="https://github.com/Oruga420/claude-code-skills" target="_blank" class="nav-gh">
@@ -684,12 +687,12 @@
       <span class="gradient-text">Skills</span> that make<br>Claude Code deadly
     </h1>
     <p>
-      76 skills and 43 slash commands that teach Claude domain-specific patterns,
+      80 skills and 43 slash commands that teach Claude domain-specific patterns,
       workflows, and best practices. Drop them in and level up instantly.
     </p>
     <div class="stats">
       <div class="stat">
-        <div class="stat-value">79</div>
+        <div class="stat-value">80</div>
         <div class="stat-label">Skills</div>
       </div>
       <div class="stat">
@@ -697,7 +700,7 @@
         <div class="stat-label">Commands</div>
       </div>
       <div class="stat">
-        <div class="stat-value">15</div>
+        <div class="stat-value">16</div>
         <div class="stat-label">Categories</div>
       </div>
     </div>
@@ -747,6 +750,13 @@
 
     const DATA = [
       {
+        id: 'llmwiki', name: 'LLM Wiki & Knowledge Systems', icon: '📚', type: 'skill',
+        items: [
+          { name: 'arise', desc: 'Bootstrap a Karpathy-style persistent wiki inside any project. Personal mode: weekly tasks with carry-over, goals, habits, and chat history mining. Laboral mode: PRDs, call transcripts, org hierarchy, positions, work projects. Wires /compact to auto-update every session' },
+          { name: 'karpathy', desc: 'Autonomous research and experimentation loop inspired by Karpathy\'s autoresearch — deploys a 4-agent team (Researcher, Executor, Analyst, Lead) to continuously optimize any measurable metric' },
+        ]
+      },
+      {
         id: 'ai', name: 'AI & Agent Patterns', icon: '🤖', type: 'skill',
         items: [
           { name: 'agent-harness-construction', desc: 'Design and optimize AI agent action spaces, tool definitions, and observation formatting for higher completion rates' },
@@ -760,7 +770,6 @@
           { name: 'enterprise-agent-ops', desc: 'Operate long-lived agent workloads with observability, security boundaries, and lifecycle management' },
           { name: 'eval-harness', desc: 'Formal evaluation framework for Claude Code sessions implementing eval-driven development (EDD)' },
           { name: 'iterative-retrieval', desc: 'Progressively refine context retrieval to solve the subagent context problem' },
-          { name: 'karpathy', desc: 'Autonomous research loop inspired by Karpathy — 4-agent team continuously optimizes any measurable metric' },
           { name: 'long-running-harness', desc: 'Multi-agent harness: Planner→Generator→Evaluator loop with context resets and sprint contracts' },
           { name: 'nanoclaw-repl', desc: "NanoClaw v2 — ECC's zero-dependency session-aware REPL built on claude -p" },
           { name: 'ralphinho-rfc-pipeline', desc: 'RFC-driven multi-agent DAG execution with quality gates, merge queues, and work unit orchestration' },

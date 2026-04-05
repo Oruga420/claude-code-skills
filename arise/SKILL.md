@@ -1,58 +1,113 @@
 ---
 name: arise
-description: Bootstrap or sync a persistent LLM wiki inside any project. Detects if the project is new or existing, gathers required context through Q&A or codebase scanning, then builds a .claude/wiki/ knowledge structure with agent harness support (OpenClaw, NanoClaw, NemoClaw). Wires /compact to auto-update the wiki on every context save.
+description: Bootstrap or sync a persistent Karpathy-style LLM wiki inside any project. Asks if the project is Personal or Laboral and builds a different wiki structure for each. Personal mode tracks weekly tasks with automatic carry-over, links to projects, and mines chat history for updates. Laboral mode structures PRDs, call transcripts, org hierarchy, positions, and work projects. Both modes wire /compact to auto-update the wiki every session.
 ---
 
 # /arise — Persistent Project Wiki Bootstrap
 
 Inspired by Karpathy's LLM Wiki pattern. Instead of rediscovering knowledge from scratch on every session, ARISE builds a **persistent, compounding wiki** inside `.claude/wiki/` that grows richer with every session, ingest, and `/compact`.
 
-Primary use case: projects running agent harnesses (OpenClaw, NanoClaw, NemoClaw) for **onboarding**, **Q&A**, and **task tracking** across teams and communication channels.
+Two modes based on project type:
+- **Personal** — weekly tasks with carry-over, personal goals, habits, linked to projects. Fed from your chat history automatically.
+- **Laboral** — PRDs, call transcripts, org chart, positions, work projects. Structured for team/company context.
 
 ---
 
 ## Phase 0 — Detect Project State
 
-Before doing anything else, check the following:
+Check the following before anything else:
 
 1. Does `.claude/wiki/index.md` exist?
 2. Does `.claude/wiki/overview.md` exist?
-3. Does `.claude/CLAUDE.md` (project-level) exist?
 
 **Decision:**
-- If `wiki/index.md` AND `wiki/overview.md` both exist → **EXISTING PROJECT** mode (Phase 2)
-- Otherwise → **NEW PROJECT** mode (Phase 1)
+- Both exist → **EXISTING PROJECT** mode (go to Phase 2)
+- Neither exists → **NEW PROJECT** mode (go to Phase 1)
+
+---
+
+## Phase 0.5 — Determine Project Type (ALWAYS run, new and existing)
+
+Before gathering any other info, ask:
+
+```
+AskUserQuestion:
+  question: "Is this a personal project or a work project?"
+  header: "Project Type"
+  options:
+    - label: "Personal (Recommended)"
+      description: "Personal goals, weekly tasks with carry-over, habits, side projects. Claude mines your chat history to keep it updated."
+    - label: "Laboral"
+      description: "Work project. Structures PRDs, call transcripts, org hierarchy, positions, decisions, and team projects."
+```
+
+Store the answer as `PROJECT_TYPE = personal | laboral`. All subsequent phases branch on this value.
 
 ---
 
 ## Phase 1 — New Project: Interactive Bootstrap
 
-The wiki doesn't exist yet. Gather everything needed to seed it. Use `AskUserQuestion` for structured choices, then follow up with open-ended questions for detail.
+### Step 1.1 — Common Questions (both modes)
 
-### Step 1.1 — Agent Harness
+Ask sequentially, one at a time:
 
-Ask the user which agent harness powers (or will power) this project:
+1. **Project name**: "What is the name of this project?"
+2. **Description**: "In 2–3 sentences, what does this project do and who is it for?"
+3. **Goals**: "What does success look like in 3 months? List 2–4 concrete goals."
+
+### Step 1.2 — Personal Mode Questions
+
+Only if `PROJECT_TYPE = personal`:
+
+4. **Active projects**: "Which projects are you currently working on? List them with a one-line description each. I'll link your tasks to these."
+5. **Weekly rhythm**: "What day does your week start? (Monday / Sunday / Other)"
+6. **Recurring habits/routines**: "Any recurring habits or routines you want to track? (e.g., 'exercise 3x/week', 'review finances every Friday') Type 'none' to skip."
+7. **Carry-over rule**: "When a task isn't done by its due day, how should I handle it?"
 
 ```
 AskUserQuestion:
-  question: "Which agent harness is this project built on?"
+  question: "When a task isn't completed on time, how should I handle it?"
+  header: "Carry-over"
+  options:
+    - label: "Auto carry-over to next day (Recommended)"
+      description: "Unfinished tasks silently move to tomorrow's list."
+    - label: "Carry-over with warning"
+      description: "Tasks move forward but are highlighted as overdue."
+    - label: "Move to weekly backlog"
+      description: "Overdue tasks go to a backlog file, not to tomorrow."
+```
+
+8. **Chat history mining**: "Should I mine your recent Claude chat history to pre-fill tasks and context? (yes / no)"
+
+### Step 1.3 — Laboral Mode Questions
+
+Only if `PROJECT_TYPE = laboral`:
+
+4. **Company/team name**: "What is the company or team name?"
+5. **Your role**: "What is your role or position?"
+6. **Team roster**: "List the people you work with directly (name + role, e.g. 'Ana — Product Manager'). Type 'none' to skip."
+7. **Agent harness** (if applicable):
+
+```
+AskUserQuestion:
+  question: "Does this project use an agent harness?"
   header: "Harness"
   options:
     - label: "OpenClaw"
-      description: "Open-source agent framework by Peter Steinberger. Runs via WhatsApp, Telegram, Discord, Slack. 250k+ GitHub stars."
+      description: "Open-source agent framework. Runs via WhatsApp, Telegram, Discord, Slack."
     - label: "NanoClaw"
-      description: "Lightweight containerized alternative to OpenClaw. Claude Agent SDK-based. Runs in Docker sandboxes for security isolation."
+      description: "Containerized Claude Agent SDK. Docker-isolated filesystem."
     - label: "NemoClaw (NVIDIA)"
-      description: "Enterprise OpenClaw built on NVIDIA NeMo + NIM. Adds policy-based guardrails and on-prem GPU deployment."
-    - label: "Custom / Other"
-      description: "Custom harness, LangGraph, CrewAI, or not decided yet."
+      description: "Enterprise OpenClaw with NVIDIA NeMo + NIM guardrails."
+    - label: "None / Not applicable"
+      description: "No agent harness — this is a standard work wiki."
 ```
 
-### Step 1.2 — Communication Channels
+8. **Communication channels** (if harness selected):
 
 ```
 AskUserQuestion:
-  question: "Which channels will your agent operate through?"
+  question: "Which channels does your agent operate through?"
   header: "Channels"
   multiSelect: true
   options:
@@ -62,266 +117,408 @@ AskUserQuestion:
     - label: "Slack"
 ```
 
-### Step 1.3 — Primary Use Cases
+9. **Existing sources**: "Any documents, PRDs, transcripts, or files to ingest now? List paths or URLs, or type 'none'."
+10. **Risks / Constraints**: "Any known constraints? (e.g., 'no PII in wiki', 'all data on-prem')"
 
-```
-AskUserQuestion:
-  question: "What are the primary use cases for this agent?"
-  header: "Use Cases"
-  multiSelect: true
-  options:
-    - label: "Onboarding"
-      description: "Guide new team members through processes, tools, and culture."
-    - label: "Q&A"
-      description: "Answer questions from team using accumulated wiki knowledge."
-    - label: "Task Tracking"
-      description: "Assign, track, and follow up on tasks for team members."
-    - label: "All Three"
-      description: "Full suite: onboarding + Q&A + task follow-up."
-```
-
-### Step 1.4 — Open-Ended Context Collection
-
-After structured questions, ask these sequentially (do NOT batch — wait for each answer before proceeding):
-
-1. **Project name**: "What is the name of this project?"
-2. **Description**: "In 2–3 sentences, what does this project do and who is it for?"
-3. **Goals**: "What does success look like in 3 months? List 2–4 concrete goals."
-4. **Team / Stakeholders**: "List the people or roles involved (name + role, e.g. 'Ana — HR Lead'). Include everyone who will interact with the agent."
-5. **Key Concepts**: "Are there domain-specific terms, processes, or systems this agent must know? List them with brief explanations."
-6. **Existing Sources**: "Are there any documents, READMEs, links, or files I should ingest now to seed the wiki? List them or type 'none'."
-7. **Risks / Constraints**: "Any known risks, limitations, or constraints I should note in the wiki? (e.g., 'all data must stay on-prem', 'no PII in wiki')"
-
-**Rule: Do not proceed to Phase 3 until all 7 questions are answered.** If the user says a field is intentionally blank, log that explicitly in the wiki and explain the risk in `overview.md`.
+**Rule: Do not proceed to Phase 3 until all mode-specific questions are answered.** If the user says a field will stay blank, log it with `> ⚠️ INCOMPLETE:` and document the risk.
 
 ---
 
 ## Phase 2 — Existing Project: Scan and Sync
 
-The wiki exists but may be stale, or a new session just started. Perform a full project scan to refresh.
-
 ### Step 2.1 — Read Everything
 
-Scan the following in order:
-1. `.claude/wiki/overview.md` — load current project state
+Scan in order:
+1. `.claude/wiki/overview.md` — current project state + PROJECT_TYPE
 2. `.claude/wiki/index.md` — catalog of existing pages
-3. `.claude/wiki/log.md` — last 10 entries (recent history)
-4. `.claude/wiki/entities/team.md` — current team roster
-5. `.claude/wiki/entities/systems.md` — integrations and harnesses
-6. `.claude/wiki/schema.md` — wiki conventions
-7. Root `README.md`, `package.json`, `pyproject.toml` (if they exist)
-8. Any `.env.example` or config files (read keys only, never values)
-9. `CLAUDE.md` (project-level) if it exists outside `.claude/`
+3. `.claude/wiki/log.md` — last 10 entries
+4. Mode-specific folders (personal/ or laboral/)
+5. Root `README.md`, `package.json`, `pyproject.toml` if present
+6. `.claude/CLAUDE.md` if present
 
 ### Step 2.2 — Gap Detection
 
-After scanning, identify every field in the Required Wiki Fields list (see below) that is:
-- Missing entirely
-- Marked `TBD`, `TODO`, or `unknown`
-- Contradicted by newer data found in the scan
+Find every Required Field that is missing, `TBD`, `TODO`, or `unknown`. For each gap, ask the user. Do NOT proceed until every gap is resolved or the user explicitly confirms it stays incomplete with documented risk.
 
-For each gap, ask the user. Do NOT proceed to Phase 3 until every gap is resolved or the user explicitly confirms it will remain incomplete AND acknowledges the documented risk.
+**Required Fields — Both Modes:**
+- [ ] Project name and description
+- [ ] At least 2 goals
+- [ ] PROJECT_TYPE (personal or laboral)
 
-**Required Wiki Fields:**
-- [ ] Project name and 2–3 sentence description
-- [ ] Goals (min 2 concrete goals)
-- [ ] Agent harness (OpenClaw / NanoClaw / NemoClaw / custom)
-- [ ] Communication channels
-- [ ] Primary use cases (onboarding / Q&A / task tracking)
-- [ ] Team roster with roles
-- [ ] Key domain concepts (min 3)
-- [ ] At least 1 ingested source
-- [ ] Known risks and constraints
+**Required Fields — Personal:**
+- [ ] At least 1 active project linked
+- [ ] Week start day
+- [ ] Carry-over rule
+- [ ] Current week task file exists
 
-If a field is confirmed-incomplete, write a `> ⚠️ INCOMPLETE:` block in the relevant wiki page explaining what is missing and why the user chose to continue without it.
+**Required Fields — Laboral:**
+- [ ] Company/team name
+- [ ] Your role
+- [ ] At least 1 team member (or explicit confirmation team is solo)
+- [ ] At least 1 PRD or source ingested (or explicit confirmation none exist)
 
 ---
 
-## Phase 3 — Build the Wiki Structure
+## Phase 3A — Build Wiki Structure: PERSONAL MODE
 
-Create the following directory and file structure inside the current project. Never overwrite existing files — append or merge instead.
+Create this structure. Never overwrite existing files — append or merge.
 
 ```
 .claude/
-├── CLAUDE.md                     ← create if missing; append arise section if exists
+├── CLAUDE.md
 ├── rules/
-│   └── arise.md                  ← wiki conventions + compact rule
+│   └── arise.md
 ├── agents/
-│   └── arise-agent.md            ← agent persona and capabilities
+│   └── arise-agent.md
 └── wiki/
-    ├── index.md                   ← catalog: every page, one-line summary, link
-    ├── log.md                     ← append-only chronological log
-    ├── schema.md                  ← conventions for THIS project's wiki
-    ├── overview.md                ← project overview, goals, vision, harness
-    ├── sources/                   ← one file per ingested source
+    ├── index.md
+    ├── log.md
+    ├── schema.md
+    ├── overview.md
+    ├── sources/
     │   └── _README.md
-    ├── entities/
-    │   ├── team.md                ← roster: name, role, channel handle, joined date
-    │   └── systems.md             ← external systems, integrations, APIs
-    ├── concepts/
-    │   ├── onboarding.md          ← onboarding process and steps
-    │   ├── qa-process.md          ← how Q&A works, common questions
-    │   └── task-tracking.md       ← task lifecycle, statuses, escalation
-    └── queries/
-        └── _README.md             ← filed answers to important one-off questions
+    └── personal/
+        ├── tasks/
+        │   ├── week-YYYY-WNN.md     ← current week (e.g. week-2026-W15.md)
+        │   ├── backlog.md           ← tasks that were explicitly deferred
+        │   └── _archive/            ← completed weeks auto-archived here
+        ├── projects.md              ← all active personal projects + status
+        ├── habits.md                ← recurring habits and tracking
+        ├── goals.md                 ← short/medium/long term goals
+        └── journal/
+            └── _README.md           ← optional: one file per notable session
 ```
 
-### File Templates
+### Personal File Templates
 
-#### `.claude/wiki/overview.md`
+#### `.claude/wiki/personal/tasks/week-YYYY-WNN.md`
 ```markdown
-# [Project Name] — Overview
+# Tasks — Week WNN (YYYY-MM-DD to YYYY-MM-DD)
 
-**Description:** [2–3 sentences]
-
-**Agent Harness:** [OpenClaw / NanoClaw / NemoClaw / Custom]
-**Channels:** [WhatsApp, Telegram, Discord, Slack, ...]
-**Use Cases:** [Onboarding, Q&A, Task Tracking]
-
-## Goals
-1. [Goal 1]
-2. [Goal 2]
-...
-
-## Risks & Constraints
-- [Risk 1]
-- [Risk 2]
-
-## Status
-**Last updated:** [YYYY-MM-DD]
-**Wiki health:** [number] pages | [number] sources | [number] open queries
-```
-
-#### `.claude/wiki/schema.md`
-```markdown
-# Wiki Schema — [Project Name]
-
-## Directory Conventions
-- `sources/` — one .md file per ingested source. Filename = kebab-case title.
-- `entities/` — persistent pages for people, systems, integrations.
-- `concepts/` — domain knowledge pages. Update when understanding deepens.
-- `queries/` — file important Q&A sessions here. Format: YYYY-MM-DD-topic.md
-
-## Page Header Format
-Every wiki page MUST start with:
-```
-# [Title]
 **Last updated:** YYYY-MM-DD
-**Tags:** [comma, separated]
-**Related:** [[page1]], [[page2]]
-```
+**Week start:** [Monday/Sunday]
+**Related:** [[personal/projects]], [[personal/goals]]
 
-## Cross-Reference Rules
-- Always link related pages using `[[page-name]]` syntax.
-- When a source contradicts an existing claim, add `> ⚠️ CONFLICT:` block.
-- When a claim is superseded, mark old claim `> ~~outdated~~` and add new claim.
+## Monday YYYY-MM-DD
+- [ ] [Task] — [[projects/project-name]]
+- [ ] [Task]
 
-## Ingest Workflow
-1. Add source file to `sources/`
-2. Update `entities/` and `concepts/` pages affected
-3. Update `index.md` with new pages
-4. Append entry to `log.md`
+## Tuesday YYYY-MM-DD
+- [ ] [Task]
 
-## Compact Workflow (runs on every /compact)
-See `rules/arise.md` for the mandatory compact checklist.
-```
+## Wednesday YYYY-MM-DD
+- [ ] [Task]
 
-#### `.claude/wiki/entities/team.md`
-```markdown
-# Team Roster
+## Thursday YYYY-MM-DD
+- [ ] [Task]
 
-**Last updated:** [YYYY-MM-DD]
-**Tags:** team, people, stakeholders
-**Related:** [[concepts/onboarding]], [[concepts/task-tracking]]
+## Friday YYYY-MM-DD
+- [ ] [Task]
 
-| Name | Role | Channel Handle | Joined | Notes |
-|------|------|---------------|--------|-------|
-| [Name] | [Role] | [@handle] | [YYYY-MM-DD] | |
-```
-
-#### `.claude/wiki/entities/systems.md`
-```markdown
-# Systems & Integrations
-
-**Last updated:** [YYYY-MM-DD]
-**Tags:** systems, integrations, infrastructure
-**Related:** [[overview]]
-
-## Agent Harness
-**Type:** [OpenClaw / NanoClaw / NemoClaw / Custom]
-**Version:** [version]
-**Deployment:** [local / cloud / container / on-prem GPU]
-**Channels connected:** [list]
-
-## External Systems
-| System | Purpose | Status | Notes |
-|--------|---------|--------|-------|
-| | | | |
-```
-
-#### `.claude/wiki/log.md`
-```markdown
-# Wiki Log
-
-Append-only. Most recent entries at the top.
-Format: `## [YYYY-MM-DD HH:MM] <type> | <title>`
-Types: ingest | query | update | lint | session | compact
+## Weekend
+- [ ] [Task]
 
 ---
 
-## [YYYY-MM-DD] session | /arise bootstrap
-Initial wiki created via /arise skill.
-Pages created: [list]
+## Carried Over From Last Week
+> Tasks that weren't completed and were automatically moved here.
+
+- [ ] ~~[Original due: Mon YYYY-MM-DD]~~ → [Task description] — [[projects/project-name]]
+
+---
+
+## Completed This Week
+- [x] [Task] — completed YYYY-MM-DD
 ```
 
-#### `.claude/wiki/index.md`
+#### `.claude/wiki/personal/projects.md`
 ```markdown
-# Wiki Index — [Project Name]
+# Active Personal Projects
 
-Updated on every /compact. One entry per page.
+**Last updated:** YYYY-MM-DD
+**Tags:** projects, personal
+**Related:** [[personal/goals]], [[personal/tasks/week-current]]
 
-## Overview & Schema
-- [overview.md](overview.md) — Project goals, harness, channels, use cases
-- [schema.md](schema.md) — Wiki conventions and workflows
+| Project | Description | Status | Last Activity | Notes |
+|---------|-------------|--------|---------------|-------|
+| [Name] | [1-line desc] | active/paused/done | YYYY-MM-DD | |
+```
 
-## Entities
-- [entities/team.md](entities/team.md) — Team roster with roles and handles
-- [entities/systems.md](entities/systems.md) — Agent harness and integrations
+#### `.claude/wiki/personal/goals.md`
+```markdown
+# Personal Goals
 
-## Concepts
-- [concepts/onboarding.md](concepts/onboarding.md) — Onboarding process and steps
-- [concepts/qa-process.md](concepts/qa-process.md) — Q&A workflow and common questions
-- [concepts/task-tracking.md](concepts/task-tracking.md) — Task lifecycle and escalation
+**Last updated:** YYYY-MM-DD
+**Tags:** goals, personal
+**Related:** [[personal/projects]], [[personal/habits]]
 
-## Sources
-[files will appear here as sources are ingested]
+## Short Term (this month)
+1. [Goal] — linked to [[personal/projects/project-name]]
 
-## Queries
-[filed Q&A sessions will appear here]
+## Medium Term (3–6 months)
+1. [Goal]
+
+## Long Term (1+ year)
+1. [Goal]
+```
+
+#### `.claude/wiki/personal/habits.md`
+```markdown
+# Habits & Routines
+
+**Last updated:** YYYY-MM-DD
+**Tags:** habits, routines, personal
+
+| Habit | Frequency | Tracking | Notes |
+|-------|-----------|----------|-------|
+| [Habit] | [daily/3x week/etc] | [yes/no] | |
+```
+
+### Personal Mode — Carry-Over Logic
+
+At every `/compact` (and at the start of each new week), Claude MUST:
+
+1. **Find unfinished tasks** — scan the current week file for unchecked `- [ ]` items.
+2. **Apply carry-over rule**:
+   - *Auto carry-over*: Move unchecked tasks to tomorrow's section (or Monday if weekend). No warning.
+   - *Carry-over with warning*: Move tasks and prepend `⚠️ OVERDUE (original: YYYY-MM-DD):`.
+   - *Move to backlog*: Append to `personal/tasks/backlog.md` with original due date.
+3. **New week detection**: If today's date is past the last day of the current week file, create a new `week-YYYY-WNN.md`. Carry over all unfinished tasks from the previous week into the "Carried Over" section.
+4. **Archive old weeks**: Move completed week files to `personal/tasks/_archive/` after 4 weeks.
+
+### Personal Mode — Chat History Mining
+
+If the user answered "yes" to chat history mining in Phase 1:
+
+Scan the current session context and recent conversation for:
+- Mentioned tasks or to-dos ("I need to...", "don't forget to...", "this week I have to...")
+- Project references (any project name from `personal/projects.md`)
+- Completed items ("I finished...", "done with...", "shipped...")
+- Goals or milestones mentioned
+
+For each item found:
+- If it's a task → add to today's slot in the current week file (unconfirmed items marked `- [ ] 💬 [from chat]`)
+- If it's a completion → mark the relevant task `[x]` in the week file
+- If it's a new project reference → add to `personal/projects.md`
+- If it's a goal → add to `personal/goals.md`
+
+Always show the user a summary of what was mined before writing it.
+
+---
+
+## Phase 3B — Build Wiki Structure: LABORAL MODE
+
+```
+.claude/
+├── CLAUDE.md
+├── rules/
+│   └── arise.md
+├── agents/
+│   └── arise-agent.md
+└── wiki/
+    ├── index.md
+    ├── log.md
+    ├── schema.md
+    ├── overview.md
+    ├── sources/
+    │   └── _README.md
+    └── laboral/
+        ├── org/
+        │   ├── hierarchy.md         ← company org chart (text/tree format)
+        │   ├── positions.md         ← all roles with descriptions + owners
+        │   └── my-role.md           ← your specific role, responsibilities, KPIs
+        ├── team/
+        │   ├── roster.md            ← team members: name, role, contact, joined
+        │   └── stakeholders.md      ← external stakeholders, clients, partners
+        ├── projects/
+        │   ├── _index.md            ← all work projects + status
+        │   └── [project-name].md    ← one file per project
+        ├── prd/
+        │   ├── _index.md            ← catalog of all PRDs
+        │   └── [YYYY-MM-DD]-[name].md  ← one file per PRD
+        ├── transcripts/
+        │   ├── _index.md            ← catalog of all calls/meetings
+        │   └── [YYYY-MM-DD]-[topic].md ← one file per call/meeting
+        ├── decisions/
+        │   └── log.md               ← append-only decision log
+        └── queries/
+            └── _README.md
+```
+
+### Laboral File Templates
+
+#### `.claude/wiki/laboral/org/hierarchy.md`
+```markdown
+# Company / Team Hierarchy
+
+**Last updated:** YYYY-MM-DD
+**Tags:** org, hierarchy, structure
+**Related:** [[laboral/org/positions]], [[laboral/team/roster]]
+
+## Organization Tree
+
+[Company Name]
+├── [C-Suite / Leadership]
+│   ├── [Name] — [Title]
+│   └── [Name] — [Title]
+├── [Department]
+│   ├── [Name] — [Title]
+│   └── [Team]
+│       ├── [Name] — [Title]  ← YOU
+│       └── [Name] — [Title]
+└── [Department]
+    └── ...
+
+## Reporting Lines
+- **I report to:** [Name] — [Title]
+- **Reports to me:** [Name] — [Title] / none
+```
+
+#### `.claude/wiki/laboral/org/positions.md`
+```markdown
+# Positions & Roles
+
+**Last updated:** YYYY-MM-DD
+**Tags:** positions, roles, org
+**Related:** [[laboral/org/hierarchy]], [[laboral/team/roster]]
+
+| Position | Department | Owner | Level | Key Responsibilities | Open? |
+|----------|------------|-------|-------|----------------------|-------|
+| [Title] | [Dept] | [Name] | [IC/Manager/Director] | [summary] | no |
+```
+
+#### `.claude/wiki/laboral/prd/[YYYY-MM-DD]-[name].md`
+```markdown
+# PRD: [Feature/Product Name]
+
+**Date:** YYYY-MM-DD
+**Author:** [Name]
+**Status:** draft | review | approved | shipped | deprecated
+**Last updated:** YYYY-MM-DD
+**Tags:** prd, [feature-area]
+**Related:** [[laboral/projects/project-name]]
+
+## Problem Statement
+[What problem does this solve? For whom?]
+
+## Goals & Success Metrics
+- Goal 1: [metric]
+- Goal 2: [metric]
+
+## Non-Goals
+- [What this explicitly does NOT do]
+
+## User Stories
+- As a [user], I want to [action] so that [outcome].
+
+## Requirements
+### Functional
+- [ ] [Requirement]
+
+### Non-Functional
+- [ ] [Performance / Security / Scale requirement]
+
+## Open Questions
+- [ ] [Question] — Owner: [Name] — Due: YYYY-MM-DD
+
+## Decision Log
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| YYYY-MM-DD | [Decision] | [Why] |
+```
+
+#### `.claude/wiki/laboral/transcripts/[YYYY-MM-DD]-[topic].md`
+```markdown
+# [Meeting/Call Title]
+
+**Date:** YYYY-MM-DD
+**Time:** HH:MM — HH:MM [timezone]
+**Type:** call | standup | review | 1:1 | all-hands | client-call | interview
+**Participants:** [Name (Role), Name (Role)]
+**Last updated:** YYYY-MM-DD
+**Tags:** transcript, [topic-area]
+**Related:** [[laboral/projects/project-name]]
+
+## Summary
+[2–4 sentence summary of what was discussed and decided]
+
+## Key Points
+- [Point 1]
+- [Point 2]
+
+## Decisions Made
+- [Decision] — Owner: [Name]
+
+## Action Items
+- [ ] [Action] — Owner: [Name] — Due: YYYY-MM-DD
+
+## Raw Notes / Transcript
+[paste transcript or notes here]
+```
+
+#### `.claude/wiki/laboral/decisions/log.md`
+```markdown
+# Decision Log
+
+Append-only. Most recent at top.
+Format: `## [YYYY-MM-DD] [title] — [outcome]`
+
+---
+
+## [YYYY-MM-DD] [Decision Title] — [Approved / Rejected / Deferred]
+**Context:** [Why this decision was needed]
+**Options considered:** [list]
+**Chosen:** [option]
+**Rationale:** [why]
+**Owner:** [Name]
+**Related:** [[laboral/prd/...]] or [[laboral/projects/...]]
+```
+
+#### `.claude/wiki/laboral/projects/_index.md`
+```markdown
+# Work Projects
+
+**Last updated:** YYYY-MM-DD
+**Tags:** projects, laboral
+
+| Project | Description | Status | My Role | PRD | Last Activity |
+|---------|-------------|--------|---------|-----|---------------|
+| [Name] | [1-line] | active/hold/done | [Role] | [[prd/...]] | YYYY-MM-DD |
 ```
 
 ---
 
 ## Phase 4 — Wire CLAUDE.md, rules/arise.md, agents/arise-agent.md
 
-### `.claude/CLAUDE.md` — Append this section (create file if missing):
+### `.claude/CLAUDE.md` — Append this block (create if missing):
 
 ```markdown
 ## ARISE Wiki System
 
+**Mode:** [PERSONAL / LABORAL]
+
 This project uses the ARISE persistent wiki pattern (inspired by Karpathy's LLM Wiki).
+Wiki lives in `.claude/wiki/`. DO NOT delete or reorganize without running `/arise` first.
 
-### Wiki Location
-`.claude/wiki/` — DO NOT delete or reorganize without running `/arise` first.
+### How to Use
+- Answer questions: read `wiki/index.md` first, then drill into relevant pages.
+- Ingest sources: summarize to `wiki/sources/`, update related pages, append to `wiki/log.md`.
+- File good answers: save to `wiki/queries/YYYY-MM-DD-topic.md`, link from index.
 
-### How to Use the Wiki
-- **Answer questions** by reading `wiki/index.md` first, then drilling into relevant pages.
-- **Ingest a new source** by reading it, summarizing to `wiki/sources/`, updating relevant entity/concept pages, and appending to `wiki/log.md`.
-- **File a good answer** by saving it to `wiki/queries/YYYY-MM-DD-topic.md` and linking from `wiki/index.md`.
-- **Run a lint pass** periodically: check for contradictions, orphan pages, missing cross-references.
+### PERSONAL MODE — Extra Rules
+- Current week tasks: `wiki/personal/tasks/week-YYYY-WNN.md`
+- Always check for unfinished tasks before starting work each session.
+- Mine chat history for mentioned tasks and completions.
+- Apply carry-over rule on every /compact.
+
+### LABORAL MODE — Extra Rules
+- PRDs live in `wiki/laboral/prd/` — always link to related project file.
+- Transcripts go in `wiki/laboral/transcripts/` — extract action items immediately.
+- Decisions go in `wiki/laboral/decisions/log.md` — never leave decisions in chat only.
+- Org changes → update `wiki/laboral/org/hierarchy.md` and `positions.md`.
 
 ### On Every /compact — MANDATORY
-Before Claude compacts the context, it MUST execute the compact wiki checklist defined in `.claude/rules/arise.md`.
+Execute the full compact checklist in `.claude/rules/arise.md` BEFORE compacting.
 ```
 
 ### `.claude/rules/arise.md`
@@ -330,43 +527,67 @@ Before Claude compacts the context, it MUST execute the compact wiki checklist d
 # ARISE Wiki Rules
 
 ## Core Principle
-The wiki is a persistent, compounding artifact. Every session makes it richer. Never let knowledge evaporate into chat history.
+The wiki is a persistent, compounding artifact. Every session makes it richer.
+Never let knowledge evaporate into chat history.
 
-## Mandatory Compact Checklist
-When `/compact` is triggered, BEFORE compacting Claude MUST:
+## Mandatory Compact Checklist (ALL MODES)
+Before /compact, Claude MUST:
 
-1. **Log the session** — Append an entry to `wiki/log.md`:
+1. **Log the session**
+   Append to `wiki/log.md`:
    ```
-   ## [YYYY-MM-DD HH:MM] compact | [session topic]
-   [2–4 bullet summary of what was done/learned this session]
+   ## [YYYY-MM-DD HH:MM] compact | [topic]
+   - [bullet 1 — what was done/learned]
+   - [bullet 2]
    ```
 
-2. **Update entity pages** — Did we learn anything new about team members, systems, or integrations? Update `wiki/entities/*.md`.
+2. **Update index** — add any new pages to `wiki/index.md` with one-line summary.
 
-3. **Update concept pages** — Did any domain knowledge deepen or change? Update `wiki/concepts/*.md`.
+3. **Flag conflicts** — if new info contradicts existing pages, add `> ⚠️ CONFLICT:` blocks.
 
-4. **File answered queries** — If a significant question was answered this session, save it to `wiki/queries/YYYY-MM-DD-topic.md` and link from `wiki/index.md`.
+## Personal Mode — Compact Checklist
+Additionally, before /compact:
 
-5. **Update index** — If any new pages were created, add them to `wiki/index.md` with a one-line summary.
+4. **Task carry-over** — scan current week file for unchecked tasks.
+   Apply carry-over rule (auto / warning / backlog) per `wiki/overview.md`.
 
-6. **Flag conflicts** — If new info contradicts existing wiki content, add `> ⚠️ CONFLICT:` blocks to the relevant pages.
+5. **New week check** — if today is past the last day of the current week file,
+   create `wiki/personal/tasks/week-YYYY-WNN.md` and carry over unfinished tasks.
 
-## Wiki Integrity Rules
-- NEVER delete wiki pages — deprecate with `> ~~outdated~~` if superseded.
-- ALWAYS update `wiki/log.md` — it's the source of truth for what happened.
-- ALWAYS cross-link related pages — isolated pages are half-useless.
-- NEVER leave `TBD` or `TODO` without a linked issue or owner.
+6. **Chat mining** — scan session context for:
+   - Mentioned to-dos → add to today's slot in current week file (marked `💬 from chat`)
+   - Completed items → mark `[x]` in week file
+   - New project refs → add to `personal/projects.md`
+   Archive completed week files older than 4 weeks to `personal/tasks/_archive/`.
 
-## Ingest Rules
-- One source = one summary file in `wiki/sources/`.
-- A single source may touch 5–15 wiki pages. Touch all of them.
-- Mark every claim with its source: `[Source: filename]`.
+7. **Update projects.md** — update "Last Activity" for any project touched this session.
+
+## Laboral Mode — Compact Checklist
+Additionally, before /compact:
+
+4. **Extract action items** — scan session for any new action items.
+   Add unchecked items to the relevant transcript or project file.
+
+5. **Update projects/_index.md** — update "Last Activity" for touched projects.
+
+6. **File decisions** — if any decision was made this session,
+   append to `wiki/laboral/decisions/log.md`.
+
+7. **Link orphans** — any new PRD or transcript must be linked from its project file
+   and from `wiki/index.md`.
+
+## Integrity Rules (ALL MODES)
+- NEVER delete wiki pages. Deprecate with `> ~~outdated~~` if superseded.
+- ALWAYS update `wiki/log.md`. It is the source of truth for what happened.
+- ALWAYS cross-link related pages. Isolated pages are half-useless.
+- NEVER leave `TBD`/`TODO` without a linked owner and due date.
+- Carry-over tasks NEVER get silently deleted — they accumulate until done or explicitly deferred.
 
 ## Gap Policy
 If a Required Wiki Field is missing:
-1. Ask the user for it.
-2. If user confirms it stays incomplete, write `> ⚠️ INCOMPLETE: [reason]` in the relevant page.
-3. Document the risk of proceeding without it.
+1. Ask the user.
+2. If confirmed-incomplete, write `> ⚠️ INCOMPLETE: [reason]` in the relevant page.
+3. Document the risk of continuing without it.
 ```
 
 ### `.claude/agents/arise-agent.md`
@@ -375,115 +596,152 @@ If a Required Wiki Field is missing:
 # ARISE Agent
 
 ## Identity
-ARISE is the persistent knowledge agent for this project. It maintains the wiki, answers questions from accumulated knowledge, and keeps team context alive across sessions.
+ARISE is the persistent knowledge agent for this project.
+Mode: **[PERSONAL / LABORAL]**
 
-## Capabilities
-- **Onboarding**: Guide new team members using `wiki/concepts/onboarding.md`. Personalize by role using `wiki/entities/team.md`.
-- **Q&A**: Answer questions by reading `wiki/index.md` first, drilling into pages, synthesizing an answer, and filing it in `wiki/queries/`.
-- **Task Tracking**: Log task assignments in `wiki/entities/team.md`. Track status updates. Flag overdue tasks.
+## Session Start (ALWAYS)
+1. Read `wiki/index.md` and last 5 entries of `wiki/log.md`.
+2. Check for `> ⚠️ INCOMPLETE:` blocks — report any found.
+3. Report: "Wiki loaded. [N] pages. Mode: [personal/laboral]. Last updated [date]."
 
-## Harness Integration
-This agent is designed to work with: **[OpenClaw / NanoClaw / NemoClaw / Custom]**
+## Personal Mode Behaviors
 
-### OpenClaw / NanoClaw
-- Users interact via messaging channels (WhatsApp, Telegram, Discord, Slack).
-- ARISE reads channel messages, retrieves relevant wiki pages, responds in-channel.
-- Long answers → file to `wiki/queries/` and send link.
-- New info from conversation → update relevant wiki pages immediately.
+### Task Management
+- At session start: read current week file. Show today's tasks.
+- When user mentions completing something: mark `[x]` in week file immediately.
+- When user mentions a new task: add to today's slot in week file.
+- At /compact: run carry-over logic per rules/arise.md.
 
-### NemoClaw (NVIDIA Enterprise)
-- Same flow as OpenClaw + policy guardrails from NVIDIA Agent Toolkit.
-- PII handling: strip before writing to wiki if compliance rules require.
-- On-prem deployment: wiki lives on company infrastructure.
+### Project Linking
+- Every task MUST link to a project in `[[personal/projects]]` if applicable.
+- When user mentions a project: cross-reference with `personal/projects.md`.
 
-## Response Format
-- Short answers (<3 paragraphs): reply inline with citations `[wiki/page.md]`.
-- Complex answers: write to `wiki/queries/YYYY-MM-DD-topic.md`, reply with summary + link.
-- Task updates: acknowledge, update `wiki/entities/team.md`, confirm to user.
+### Chat Mining
+- Mine every session for mentioned tasks, completions, project refs, and goals.
+- Summarize mined items before writing. Never write without showing user first.
 
-## Session Start Behavior
-At the start of every session, ARISE MUST:
-1. Read `wiki/index.md` and `wiki/log.md` (last 5 entries).
-2. Check for any `> ⚠️ INCOMPLETE:` blocks across all pages.
-3. Report: "Wiki loaded. [N] pages. Last updated [date]. [N] open gaps."
+### Weekly Summary
+On request ("how was my week?" / "weekly review"):
+1. Read current week file.
+2. Count: tasks done / tasks carried over / tasks in backlog.
+3. Show progress per project.
+4. Suggest priorities for next week based on incomplete goals.
 
-## Unknown Knowledge Policy
+## Laboral Mode Behaviors
+
+### PRD Handling
+User says "write a PRD" or "new PRD for [feature]":
+1. Ask for: feature name, problem statement, success metrics, non-goals, user stories.
+2. Write to `wiki/laboral/prd/YYYY-MM-DD-[kebab-name].md`.
+3. Link from `wiki/laboral/projects/_index.md` and `wiki/index.md`.
+
+### Transcript Handling
+User says "log this call" or "ingest this transcript":
+1. Ask for: date, participants, type.
+2. Extract: summary, decisions, action items.
+3. Write to `wiki/laboral/transcripts/YYYY-MM-DD-[topic].md`.
+4. Move action items to relevant project file.
+5. Append decisions to `wiki/laboral/decisions/log.md`.
+
+### Org Updates
+User says "update the org chart" or "new hire [Name] as [Role]":
+1. Update `wiki/laboral/org/hierarchy.md`.
+2. Add position to `wiki/laboral/org/positions.md`.
+3. Add person to `wiki/laboral/team/roster.md`.
+
+### Harness Integration (if harness configured)
+- Users interact via configured channels (WhatsApp, Telegram, Discord, Slack).
+- ARISE reads messages, retrieves wiki pages, responds in-channel.
+- Long answers → file to `wiki/laboral/queries/` and send link.
+
+## Unknown Knowledge Policy (ALL MODES)
 If a question can't be answered from the wiki:
-1. Say so explicitly: "I don't have this in the wiki yet."
-2. If the user provides the answer, ingest it into the wiki immediately.
+1. Say so: "I don't have this in the wiki yet."
+2. If user provides the answer, ingest it immediately.
 3. Never hallucinate facts not in the wiki.
 ```
 
 ---
 
-## Phase 5 — Ingest Existing Sources (if any)
+## Phase 5 — Ingest Existing Sources
 
-If the user provided sources in Phase 1 (or if sources exist in the project), ingest them now:
-
-For each source:
+For each source provided by the user:
 1. Read it fully.
-2. Write a summary to `wiki/sources/[kebab-name].md`.
-3. Update all relevant entity and concept pages.
-4. Append an ingest entry to `wiki/log.md`.
-5. Update `wiki/index.md`.
+2. Write summary to `wiki/sources/[kebab-name].md`.
+3. **Personal**: link to relevant project in `personal/projects.md`, extract any tasks.
+4. **Laboral**: determine type (PRD → `laboral/prd/`, transcript → `laboral/transcripts/`, other → `sources/`). Extract action items.
+5. Update `wiki/index.md` and append to `wiki/log.md`.
 
 ---
 
 ## Phase 6 — Final Report
 
-After all phases complete, output a clean summary:
-
 ```
-ARISE Wiki bootstrapped successfully.
+ARISE Wiki bootstrapped.
 
 Project: [name]
-Harness: [OpenClaw / NanoClaw / NemoClaw / Custom]
-Channels: [list]
-Use Cases: [list]
+Mode: [PERSONAL / LABORAL]
 
-Wiki structure:
-  .claude/wiki/        — [N] pages created
-  .claude/rules/       — arise.md added
-  .claude/agents/      — arise-agent.md added
-  .claude/CLAUDE.md    — arise section appended
+Wiki structure created:
+  .claude/wiki/           — [N] pages
+  .claude/wiki/personal/  — [tasks/, projects.md, goals.md, habits.md]  (personal only)
+  .claude/wiki/laboral/   — [org/, team/, projects/, prd/, transcripts/, decisions/]  (laboral only)
+  .claude/rules/arise.md  — compact checklist wired
+  .claude/agents/arise-agent.md — agent persona configured
+  .claude/CLAUDE.md       — arise section appended
 
-Team: [N members]
-Concepts: [N pages]
-Sources ingested: [N]
-Open gaps: [N] (listed below if any)
+[PERSONAL]
+  Active projects: [N]
+  Current week file: wiki/personal/tasks/week-YYYY-WNN.md
+  Carry-over rule: [auto / warning / backlog]
+  Chat mining: [enabled / disabled]
 
-[If gaps exist:]
-⚠️ Incomplete fields:
-  - [field]: [reason user gave for skipping]
-  - Risk: [documented risk]
+[LABORAL]
+  Team members: [N]
+  PRDs: [N]
+  Transcripts ingested: [N]
+  Harness: [name / none]
+
+Open gaps: [N]
+[list gaps with risks if any]
 
 Next steps:
-  1. Run /arise again after adding new sources to ingest them.
-  2. /compact will auto-update the wiki at the end of every session.
-  3. Ask the agent anything — if it doesn't know, it will add it to the wiki.
+  1. /compact will auto-update the wiki and apply carry-over at every session end.
+  2. Run /arise anytime to resync or fill gaps.
+  3. Personal: start each day by asking "what are my tasks today?"
+  4. Laboral: paste a transcript and say "log this call" to ingest it instantly.
 ```
 
 ---
 
 ## Ongoing Operations
 
-### Ingest a New Source
-User says: "ingest [source]" or "add [doc] to the wiki"
+### Personal — Daily Start
+User opens Claude in a personal project:
+→ ARISE reads today's tasks from current week file. Shows a clean daily view.
+
+### Personal — Weekly Review
+User says "weekly review" or "how was my week?":
+→ ARISE reads current week, reports done/pending/carried-over, suggests next week priorities.
+
+### Laboral — Log a Call
+User says "log this call" + pastes transcript:
+→ Follow Phase 5 transcript ingest path.
+
+### Laboral — New PRD
+User says "write a PRD for [feature]":
+→ ARISE gathers requirements and writes a structured PRD to `wiki/laboral/prd/`.
+
+### Ingest Any Source (Both Modes)
+User says "add [doc] to the wiki":
 → Follow Phase 5 for that source only.
 
-### Answer a Question
-User asks anything about the project:
-1. Read `wiki/index.md` to find relevant pages.
-2. Read those pages.
-3. Synthesize answer with citations.
-4. If answer is significant, file it in `wiki/queries/`.
+### Lint Pass (Both Modes)
+User says "lint the wiki" or "health check":
+→ Check: contradictions, orphan pages, missing cross-references, stale claims, unchecked action items older than 7 days, tasks carried over 3+ times.
+→ Report findings. Fix what you can. Ask user about the rest.
 
-### Lint Pass
-User says: "lint the wiki" or "health check"
-→ Check for: contradictions, orphan pages, missing cross-references, stale claims, `TBD`/`TODO` without owners.
-→ Report findings and fix what you can. Ask user about the rest.
-
-### Re-Bootstrap
-User says: "/arise" on an existing project:
-→ Run Phase 2 (scan + gap detection) then skip to Phase 6 report.
-→ Do NOT overwrite existing wiki pages — only append and update.
+### Re-Bootstrap (Both Modes)
+User says "/arise" on an existing project:
+→ Run Phase 0.5 (confirm type), Phase 2 (scan + gap detection), skip to Phase 6 report.
+→ NEVER overwrite existing wiki pages — only append and update.

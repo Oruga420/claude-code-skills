@@ -316,6 +316,12 @@ gws gmail users drafts create --params '{"userId":"me"}' --json "$(node -e "proc
   5. Prefer Gmail/Yahoo/Outlook addresses — that's what small businesses actually use
   6. Validate MX on the **email provider domain** (e.g., `gmail.com`), NOT the business domain
 - **MX validation**: `node -e "const dns=require('dns'); dns.resolveMx('{email}'.split('@')[1], (e,a) => console.log(e ? 'FAIL' : 'OK'))"`
+- **Extended validation** (for emails NOT found via mailto: link): `node validate-email.mjs {email}`
+  - Exit code 0 → proceed
+  - Exit code 1 → INVALID, find another email
+  - Exit code 2 → UNCERTAIN, do NOT use — find a real one or leave To: blank
+  - This catches fabricated patterns like `firstname@corporate-domain.com` that pass MX but bounce
+- **NEVER fabricate `firstname@company.com` emails** — corporate mail servers almost never use this pattern. Real estate agents use personal Gmail, not `rselzer@sutton.com`.
 - If MX fails → do NOT create draft. Save HTML only, note `"email_status": "no_valid_email"` in status.
 - If email discovery exhausted and no email found → still create the draft with `To:` left blank so Alejandro can fill it manually. Note `"email_status": "needs_manual_email"` in status.
 - **NEVER skip the draft and suggest "reach out via Instagram DM"** — the pipeline delivers EMAIL drafts, period.

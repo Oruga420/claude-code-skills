@@ -101,7 +101,31 @@ dns.resolveMx(domain, (err, addresses) => {
 
 If MX check fails, the email is INVALID — do not use it.
 
-#### Step 5 — Classification in CSV
+#### Step 5 — Extended Validation (for non-website-sourced emails)
+
+If the email was NOT found directly on the business website (i.e., not from a `mailto:` link or contact page), run the extended validator:
+
+```bash
+node validate-email.mjs {email}
+```
+
+This checks:
+1. **MX records** — does the domain accept email?
+2. **Fabrication pattern detection** — flags `firstname@corporate-domain`, `info@`, `team@` patterns that are commonly guessed
+3. **SMTP probe** — attempts to verify the address exists on the mail server (best-effort, many servers block this)
+
+**Exit codes:**
+- `0` = likely valid
+- `1` = invalid (SMTP rejected or no MX)
+- `2` = uncertain — **DO NOT USE without manual verification**
+
+**Rules:**
+- Exit code 1 → drop the email, find an alternative
+- Exit code 2 + fabrication warning → the email was probably guessed. Find a real one.
+- Exit code 0 → proceed
+- Emails found via `mailto:` link on the website skip this check (they are confirmed by the business itself)
+
+#### Step 6 — Classification in CSV
 Add `email_confidence` to your notes:
 - **confirmed** — found in mailto: link or contact page, MX valid
 - **likely** — found on social media bio or directory listing, MX valid

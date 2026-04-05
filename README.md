@@ -1,6 +1,6 @@
 # Claude Code Skills & Commands
 
-A curated collection of **79 skills** and **43 slash commands** for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), the AI-powered CLI by Anthropic. Built on top of the [Everything Claude Code (ECC)](https://github.com/nicobailey/everything-claude-code) ecosystem.
+A curated collection of **80 skills** and **43 slash commands** for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), the AI-powered CLI by Anthropic. Built on top of the [Everything Claude Code (ECC)](https://github.com/nicobailey/everything-claude-code) ecosystem.
 
 Skills teach Claude domain-specific patterns, workflows, and best practices. Commands give you one-word shortcuts to trigger complex workflows.
 
@@ -37,6 +37,7 @@ Once installed, Claude Code auto-detects skills when relevant. You can also invo
 
 | Skill | Description |
 |-------|-------------|
+| [arise](./arise/) | Bootstrap a persistent Karpathy-style LLM wiki inside any project. Detects new vs existing projects, gathers context via Q&A or codebase scan, builds `.claude/wiki/` with onboarding/Q&A/task-tracking support for OpenClaw, NanoClaw, and NemoClaw harnesses. Wires `/compact` to auto-update the wiki every session |
 | [agent-harness-construction](./agent-harness-construction/) | Design and optimize AI agent action spaces, tool definitions, and observation formatting for higher completion rates |
 | [agentic-engineering](./agentic-engineering/) | Operate as an agentic engineer using eval-first execution, decomposition, and cost-aware model routing |
 | [ai-first-engineering](./ai-first-engineering/) | Engineering operating model for teams where AI agents generate a large share of implementation output |

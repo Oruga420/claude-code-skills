@@ -1,6 +1,6 @@
 # Claude Code Skills & Commands
 
-A curated collection of **80 skills** and **43 slash commands** for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), the AI-powered CLI by Anthropic. Built on top of the [Everything Claude Code (ECC)](https://github.com/nicobailey/everything-claude-code) ecosystem.
+A curated collection of **81 skills** and **43 slash commands** for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), the AI-powered CLI by Anthropic. Built on top of the [Everything Claude Code (ECC)](https://github.com/nicobailey/everything-claude-code) ecosystem.
 
 Skills teach Claude domain-specific patterns, workflows, and best practices. Commands give you one-word shortcuts to trigger complex workflows.
 
@@ -160,6 +160,7 @@ Persistent, compounding knowledge bases powered by LLMs. Inspired by [Karpathy's
 | [investor-outreach](./investor-outreach/) | Draft cold emails, warm intros, follow-ups, and investor communications for fundraising |
 | [market-research](./market-research/) | Conduct market research, competitive analysis, investor due diligence, and industry intelligence |
 | [suno-creator](./suno-creator/) | Generate Suno AI-ready song output — style prompt, lyrics, title, and production context from a song concept |
+| [orugas-design-studio](./orugas-design-studio/) | Generate images with Gemini 3 (flash/pro) and Imagen — aspect ratios, references, img2img edits, search grounding, camera/lighting/style controls |
 
 ### Claude Code Tooling
 

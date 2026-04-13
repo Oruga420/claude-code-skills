@@ -40,6 +40,17 @@ assert_not_contains() {
 
 # ---- Fakes / mocks ---------------------------------------------------------
 
+# _ensure_test_tmpdir
+#   Older bats (<1.5) doesn't populate BATS_TEST_TMPDIR. Create one on demand
+#   so helpers that need a scratch dir work on every supported version.
+_ensure_test_tmpdir() {
+  if [[ -z "${BATS_TEST_TMPDIR:-}" ]]; then
+    BATS_TEST_TMPDIR="$(mktemp -d -t bats.XXXXXXXX)"
+    export BATS_TEST_TMPDIR
+    _BATS_TEST_TMPDIR_SELF_MADE=1
+  fi
+}
+
 # fake_home
 #   Replaces $HOME with a fresh temp dir for the duration of the test.
 #   Sets BATS_TEST_HOME so teardown() can clean up.
@@ -62,6 +73,7 @@ cleanup_fake_home() {
 mock_curl() {
   local body="$1"
   local code="${2:-0}"
+  _ensure_test_tmpdir
   local bin_dir="$BATS_TEST_TMPDIR/mockbin"
   mkdir -p "$bin_dir"
   cat > "$bin_dir/curl" <<EOF
@@ -79,7 +91,18 @@ EOF
 # last_curl_invocation
 #   Prints the captured argv from the most recent mocked curl call.
 last_curl_invocation() {
+  _ensure_test_tmpdir
   cat "$BATS_TEST_TMPDIR/curl.invocation" 2>/dev/null || true
+}
+
+# cleanup_test_tmpdir
+#   Call from teardown() to remove a BATS_TEST_TMPDIR we created ourselves.
+#   A no-op on bats >=1.5 (where bats manages the dir itself).
+cleanup_test_tmpdir() {
+  if [[ -n "${_BATS_TEST_TMPDIR_SELF_MADE:-}" && -d "${BATS_TEST_TMPDIR:-}" ]]; then
+    rm -rf "$BATS_TEST_TMPDIR"
+    unset BATS_TEST_TMPDIR _BATS_TEST_TMPDIR_SELF_MADE
+  fi
 }
 
 # require_cmd <name>

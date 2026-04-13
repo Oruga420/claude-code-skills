@@ -26,4 +26,7 @@ jobs:
           bash --version | head -1
 
       - name: Run test suites
+        env:
+          TERM: xterm-256color
+          BATS_FORMATTER: tap
         run: ./tests/run.sh

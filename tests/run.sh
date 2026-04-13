@@ -43,5 +43,15 @@ echo "Found ${#suites[@]} test file(s):"
 printf '  %s\n' "${suites[@]}"
 echo
 
-FORMATTER="${BATS_FORMATTER:-pretty}"
+# Default to the 'tap' formatter when TERM is unset (e.g. CI) or explicitly
+# 'dumb', because 'pretty' calls tput and dies on a broken-pipe write. Callers
+# can always override with BATS_FORMATTER.
+if [[ -n "${BATS_FORMATTER:-}" ]]; then
+  FORMATTER="$BATS_FORMATTER"
+elif [[ -z "${TERM:-}" || "$TERM" == "dumb" ]]; then
+  FORMATTER="tap"
+else
+  FORMATTER="pretty"
+fi
+
 bats --formatter "$FORMATTER" "${suites[@]}"

@@ -199,6 +199,7 @@ Persistent, compounding knowledge bases powered by LLMs. Inspired by [Karpathy's
 | [argos-dm-user](./argos-dm-user/) | Send a DM to any Slack user as Argos (the Promise Assistant bot) |
 | [nutrient-document-processing](./nutrient-document-processing/) | Process, convert, OCR, extract, redact, sign, and fill documents using the Nutrient DWS API |
 | [onboard](./onboard/) | Onboard a new employee — Google Workspace account, Slack provisioning, and welcome email |
+| [sm-post](./sm-post/) | Publish to Twitter/X, LinkedIn, Facebook, Instagram, TikTok, YouTube, Threads, Bluesky, Pinterest, Reddit, Telegram, and Google Business via the Ayrshare API. Accepts inline text, a file path, or inferred content from the conversation |
 | [visa-doc-translate](./visa-doc-translate/) | Translate visa application documents to English and create a bilingual PDF |
 
 ---

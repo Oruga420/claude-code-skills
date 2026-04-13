@@ -300,6 +300,24 @@ how to handle a specific domain or workflow.
 
 See [project-guidelines-example](./project-guidelines-example/) for a real-world template.
 
+## Testing
+
+Skills that ship executable scripts (`*.sh`, `*.mjs`, `*.py`) should ship tests under `<skill>/tests/`. Tests use [bats-core](https://github.com/bats-core/bats-core); the runner discovers every `*.bats` file in the repo.
+
+```bash
+# Install once
+brew install bats-core          # macOS
+sudo apt install bats           # Debian/Ubuntu
+
+# Run everything
+./tests/run.sh
+
+# Or a single skill
+bats ./my-skill/tests/
+```
+
+See [`tests/README.md`](./tests/README.md) for conventions, shared helpers, and a copy-pasteable reference suite in [`tests/example/`](./tests/example/). CI runs the full suite on every PR via `.github/workflows/tests.yml`.
+
 ## License
 
 MIT

@@ -1,11 +1,11 @@
 ---
 name: seedance-animator
-description: Interactive anime/animation video pipeline. Talks with the user about the boceto, idea, and art style; generates character sheets, environment/art-style refs, and a storyboard (2x2 or 3x3) via Nano Banana 2; then animates with Seedance 2.0 via Replicate. Orchestrates one agent per reference bundle. Saves all outputs to a Story Teller project folder. Applies /ralphinho-rfc-pipeline, /arise, /karpathy to evolve better agents each run.
+description: Research-first anime/animation video pipeline. Deep-researches the user's story, references, and visual inspirations (1:3 ratio — 1 part user input, 3 parts research-informed detail), then generates character sheets, environment refs, and a narrative storyboard via Nano Banana 2, and animates with Seedance 2.0 via Replicate. 6-agent pipeline with story-researcher as Agent 0. Saves to Story Teller project folders.
 ---
 
 # Seedance Animator
 
-Interactive pipeline that turns a verbal concept into a fully animated Japanese-anime style scene using **Replicate** (Nano Banana 2 for stills, Seedance 2.0 for video).
+Research-first pipeline that turns a verbal concept into a fully animated scene using **Replicate** (Nano Banana 2 for stills, Seedance 2.0 for video). The key differentiator is **Agent 0: story-researcher** — it deep-dives the source material, references, and visual inspirations BEFORE any image generation, ensuring the final video tells a real story instead of producing pretty but hollow transitions.
 
 ## Hard rules
 
@@ -19,26 +19,42 @@ Interactive pipeline that turns a verbal concept into a fully animated Japanese-
 
 ## Conversation flow (MANDATORY — do this BEFORE any API call)
 
-1. **Boceto** — "¿Cómo quieres que se vea el boceto? (sketch 2x2 = 4 paneles enfocados, sketch 3x3 = 9 paneles completos, rough color, clean lineart, full-color keyframes…)" — **2x2 recommended** for focused action sequences, 3x3 for complex multi-beat scenes.
-2. **Idea** — "¿Cuál es la idea/escena? (personajes, acción, duración, mood)"
-3. **Art style** — "¿Qué estilo? (shonen 90s cel, modern sakuga, Ghibli, dark fantasy ink…)"
-4. **References** — "¿Tienes imágenes de referencia? (sube paths o dime que genere todo from scratch)"
+1. **Idea** — "¿Cuál es la idea/historia/escena? (personajes, acción, duración, mood)"
+2. **Art style + inspirations** — "¿Qué estilo? Y si tienes referencias de películas, directores, anime, o arte, dímelas — las investigo a fondo para extraer su lenguaje visual." Examples: "estilo Moana", "como Villeneuve filma Dune", "Ghibli meets Orozco murals"
+3. **Boceto** — "¿Sketch 2x2 (4 paneles enfocados) o 3x3 (9 paneles completos)?" — **2x2 recommended** for focused action, 3x3 for epic multi-act stories.
+4. **Image references** — "¿Tienes imágenes de referencia? (sube paths o genero todo from scratch con Nano Banana 2)"
 
-Only after the user answers all five, proceed.
+Only after the user answers all four, proceed. Note: the Seedance model question was removed — only `bytedance/seedance-2.0` works.
 
-## Pipeline (multi-agent, one-at-a-time)
+## Pipeline (6-agent, research-first)
 
-Each stage is a **separate agent invocation** via the `Agent` tool with `subagent_type: general-purpose`. The agents run **sequentially**, each one receiving the previous agent's outputs as inputs. The orchestrator is this skill itself.
+Each stage is a **separate agent invocation** via the `Agent` tool. The orchestrator is this skill itself. **Agent 0 is the most important** — it produces the story bible that feeds every downstream agent.
 
-| # | Agent | Source bundle | Role | Output |
-|---|-------|--------------|------|--------|
-| 1 | `character-designer` | zip1 pattern | Build character sheets (frontal/side/back + expressions) per character via Nano Banana 2 | `characters/<name>_sheet.png` |
-| 2 | `style-environment` | zip2 pattern | Lock art style + generate environment/background reference via Nano Banana 2 | `style/style_ref.png`, `style/background.png` |
-| 3 | `storyboard-composer` | zip3 pattern | Build 2x2 or 3x3 sketch storyboard with shot list via Nano Banana 2 | `storyboard/storyboard_NxN.png`, `storyboard/shotlist.md` |
-| 4 | `final-prompt-composer` | loose images pattern | Assemble final Seedance prompt using `[REF_STORYBOARD]`, `[REF_GIRL_MODEL]`, `[REF_PHOENIX_MODEL]`, `[REF_BACKGROUND]` tokens with strict priority rules | `prompt/seedance_prompt.md` |
-| 5 | `seedance-runner` | — | Call Seedance 2.0 on Replicate with all refs + sanitized prompt | `video/scene.mp4` |
+| # | Agent | Role | Output |
+|---|-------|------|--------|
+| **0** | **`story-researcher`** | **Deep-research the story, references, and visual inspirations. Break into narrative beats. 1:3 ratio: 1 part user input → 3 parts research.** | **`research/story_bible.md`, `research/refs_analysis.md`** |
+| 1 | `character-designer` | Build character sheets informed by story bible's character insights | `characters/<name>_sheet.png` |
+| 2 | `style-environment` | Lock art style + environment informed by story bible's visual language section | `style/style_ref.png`, `style/background.png` |
+| 3 | `storyboard-composer` | Build storyboard from story bible's narrative beats (NOT from raw user idea) | `storyboard/storyboard_NxN.png`, `storyboard/shotlist.md` |
+| 4 | `final-prompt-composer` | Assemble Seedance prompt using story bible + all image refs | `prompt/seedance_prompt.md` |
+| 5 | `seedance-runner` | Call Seedance 2.0 with sanitized prompt + refs | `video/scene.mp4` |
 
-Each agent prompt lives in `agents/*.md`. The orchestrator loads the prompt, fills in the shared context (run folder, model slugs, user answers, previous outputs), and spawns the agent. After the agent returns, its outputs are registered in `run_state.json` before the next stage starts.
+### Execution order
+- **Agent 0** runs first (research only, no API calls — uses WebSearch + WebFetch)
+- **Agents 1 + 2** can run **in parallel** (both read from story bible but are independent)
+- **Agent 3** runs after 1 + 2 (needs character sheets for proportion lock)
+- **Agent 4** runs after 3 (needs storyboard + all image assets)
+- **Agent 5** runs last (needs final prompt + all refs)
+
+### The 1:3 research ratio
+
+This is the core principle. When the user says "la leyenda de Izta y Popo en estilo Moana":
+- **1 part** = user's brief (the legend, Moana style)
+- **3 parts** = story-researcher adds: full mythological arc with 5+ narrative beats, emotional spine (eternal love + sacrifice), Aztec cultural symbols (eagle warriors, jade, obsidian, Quetzalcoatl), Moana's specific storytelling techniques (how it uses ocean as metaphor, its color shifts for emotional beats, Te Fiti transformation sequence as parallel), camera language from the reference film, must-have iconic moments
+
+Without this ratio, the video is wallpaper. With it, the video tells a story.
+
+Each agent prompt lives in `agents/*.md`. Every agent downstream of story-researcher receives the story bible as context.
 
 ## Continuous improvement (/arise + /karpathy + /ralphinho-rfc-pipeline)
 
@@ -58,6 +74,7 @@ seedance-animator/
 ├── .env.example              # REPLICATE_API_TOKEN=
 ├── README.md                 # quick start for the user
 ├── agents/
+│   ├── story-researcher.md   # Agent 0 — deep research + story bible (NEW)
 │   ├── character-designer.md
 │   ├── style-environment.md
 │   ├── storyboard-composer.md
@@ -83,11 +100,13 @@ python <skill_path>/scripts/orchestrator.py
 
 The orchestrator:
 1. Loads `.env` from the skill folder (falls back to CWD `.env`).
-2. Walks the 5-step conversation (prints questions, reads stdin).
-3. Creates `~/Desktop/Story Teller/<project_name>/` with asset subfolders.
-4. Spawns each agent via the Claude Code `Agent` tool in order, waiting for each to complete before the next.
-5. Writes `run_state.json` after every stage so a crash can resume.
-6. On completion, runs `/arise` sync + logs a `/karpathy` experiment stub.
+2. Walks the 4-step conversation (idea, style+inspirations, boceto, image refs).
+3. Creates `~/Desktop/Story Teller/<project_name>/` with asset subfolders including `research/`.
+4. Spawns Agent 0 (story-researcher) first — this produces the story bible.
+5. Spawns Agents 1 + 2 in parallel (both read story bible).
+6. Spawns Agents 3 → 4 → 5 sequentially.
+7. Writes `run_state.json` after every stage so a crash can resume.
+8. On completion, runs `/arise` sync + logs a `/karpathy` experiment stub.
 
 ## Replicate model slugs (confirmed working 2026-04-14)
 
@@ -109,9 +128,11 @@ If a slug returns 404 at runtime, ask the user for the exact slug from their Rep
 When the user invokes this skill:
 
 1. Read this SKILL.md.
-2. Run the 5 conversation questions inline (don't spawn an agent for the chat — do it directly with AskUserQuestion or plain text prompts).
+2. Run the 4 conversation questions inline (idea, style+inspirations, boceto, image refs).
 3. Verify `REPLICATE_API_TOKEN` is set. If not, stop and tell the user to paste it into `.env`.
-4. Create `~/Desktop/Story Teller/<project_name>/` with subfolders (`characters/`, `style/`, `storyboard/`, `prompt/`, `video/`).
-5. Spawn the 5 agents sequentially via the Agent tool, passing each agent its prompt from `agents/*.md` plus the shared run context.
-6. After the last agent returns a video path, show it to the user and ask for a 1–10 rating.
-7. Append the rating + what worked/didn't to `INSTINCTS.md` and propose one `/karpathy` experiment for the next run.
+4. Create `~/Desktop/Story Teller/<project_name>/` with subfolders (`research/`, `characters/`, `style/`, `storyboard/`, `prompt/`, `video/`).
+5. **Spawn Agent 0 (story-researcher)** — pass USER_IDEA, USER_ART_STYLE, and any film/director/art references. Wait for story bible.
+6. **Spawn Agents 1 + 2 in parallel** — both receive the story bible as context alongside user answers.
+7. **Spawn Agents 3 → 4 → 5 sequentially** — storyboard reads story bible's narrative beats (NOT raw user idea), prompt composer reads story bible + all images, runner generates video.
+8. After the last agent returns a video path, show it to the user and ask for a 1–10 rating.
+9. Append the rating + what worked/didn't to `INSTINCTS.md` and propose one `/karpathy` experiment for the next run.

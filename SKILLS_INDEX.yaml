@@ -21,7 +21,7 @@
 
 meta:
   version: 1
-  total_skills: 86
+  total_skills: 85
   maintainer: Oruga420
   read_before_use: true
   tip: >
@@ -752,14 +752,6 @@ skills:
     examples:
       - "Onboard new hire Maria" -> onboard
 
-  - name: argos-dm-user
-    folder: argos-dm-user/
-    activation: null
-    category: integrations
-    triggers: ["Slack DM", "Argos bot", "DM via Promise Assistant"]
-    use_when: Sending a DM to a Slack user as the Argos (Promise Assistant) bot.
-    examples:
-      - "DM Alex on Slack from Argos" -> argos-dm-user
 
   - name: visa-doc-translate
     folder: visa-doc-translate/

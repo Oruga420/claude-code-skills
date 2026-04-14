@@ -160,7 +160,6 @@ The shed contains **77 skills** organized by category. Below is the full index w
 ### Operations & Documents
 | Skill | Description |
 |-------|-------------|
-| argos-dm-user | Slack DM via Argos bot |
 | nutrient-document-processing | PDF/DOCX processing via Nutrient API |
 | onboard | Employee onboarding workflow |
 | visa-doc-translate | Bilingual visa document translation |

@@ -21,7 +21,7 @@
 
 meta:
   version: 1
-  total_skills: 85
+  total_skills: 86
   maintainer: Oruga420
   read_before_use: true
   tip: >
@@ -816,6 +816,30 @@ skills:
     use_when: Producing Suno-ready song output (Style prompt, Lyrics, Title, production notes).
     examples:
       - "Make me a Suno prompt for a lo-fi track" -> suno-creator
+
+  - name: notebook-research
+    folder: notebook-research/
+    activation: /notebook-research
+    category: integrations
+    triggers:
+      - "create notebook"
+      - "NotebookLM"
+      - "add sources to notebook"
+      - "research and save to notebook"
+      - "generate podcast from notebook"
+      - "query notebook"
+      - "list my notebooks"
+    use_when: >
+      Creating, managing, and querying Google NotebookLM notebooks from Claude Code.
+      Includes auto-bootstrap: installs nlm CLI, registers MCP server, and handles
+      Google auth with browser login. Supports adding sources, web research,
+      audio podcast generation, cross-notebook queries, and pipelines.
+    avoid_when: >
+      General web research without NotebookLM — use market-research or search-first instead.
+    examples:
+      - "Create a NotebookLM notebook about AI agents" -> notebook-research
+      - "Add this URL to my research notebook" -> notebook-research
+      - "Generate a podcast from my notebook" -> notebook-research
 
   # ---------------------------------------------------------------------------
   # WORKFLOWS / PIPELINES

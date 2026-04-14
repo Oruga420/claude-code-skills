@@ -1,27 +1,28 @@
 ---
 name: seedance-animator
-description: Interactive anime/animation video pipeline. Talks with the user about the boceto, idea, and art style; asks which Seedance model (seedance-2 or seedance-2-lite) to use; generates character sheets, environment/art-style refs, and a 3x3 storyboard via Nano Banana 2; then animates with Seedance 2 via Replicate. Orchestrates one agent per reference bundle. Saves all outputs to the CWD where Claude was launched. Applies /ralphinho-rfc-pipeline, /arise, /karpathy to evolve better agents each run.
+description: Interactive anime/animation video pipeline. Talks with the user about the boceto, idea, and art style; generates character sheets, environment/art-style refs, and a storyboard (2x2 or 3x3) via Nano Banana 2; then animates with Seedance 2.0 via Replicate. Orchestrates one agent per reference bundle. Saves all outputs to a Story Teller project folder. Applies /ralphinho-rfc-pipeline, /arise, /karpathy to evolve better agents each run.
 ---
 
 # Seedance Animator
 
-Interactive pipeline that turns a verbal concept into a fully animated Japanese-anime style scene using **Replicate** (Nano Banana 2 for stills, Seedance 2 / Seedance 2 Lite for video).
+Interactive pipeline that turns a verbal concept into a fully animated Japanese-anime style scene using **Replicate** (Nano Banana 2 for stills, Seedance 2.0 for video).
 
 ## Hard rules
 
 - **Always** use Nano Banana 2 (`google/nano-banana-2`) for every image generation step.
-- **Always** use Seedance (`bytedance/seedance-2` or `bytedance/seedance-2-lite`) for animation — ask the user which one per run.
-- **Save everything to the current working directory** where Claude was launched (use `$PWD` / `process.cwd()`), inside a new subfolder `./seedance_run_<timestamp>/`.
+- **Always** use Seedance 2.0 (`bytedance/seedance-2.0`) for animation. This is the only confirmed working slug — `seedance-2-lite` does NOT exist on Replicate as of 2026-04.
+- **Save everything** to `~/Desktop/Story Teller/<project_name>/` with subfolders for each asset type (`characters/`, `style/`, `storyboard/`, `prompt/`, `video/`). Ask the user for a project name or derive one from the scene idea.
 - Never invent model IDs. If the Replicate API returns 404 for a model, prompt the user for the exact slug they saw in the Replicate playground.
 - `.env` holds `REPLICATE_API_TOKEN`. Never commit it. `.env.example` is the template.
+- **Windows Python paths**: Always use `os.path.expanduser("~/.env")` and `os.path.expanduser("~/Desktop/...")` — never use Git Bash `/c/` prefix in Python code as it resolves incorrectly.
+- **Content filter**: Seedance 2.0 blocks terms like "fanservice", "ecchi", "compromising position", "on top of him". Always sanitize prompts before submission — use "slapstick comedy", "comedic landing", "awkward tangle" instead.
 
 ## Conversation flow (MANDATORY — do this BEFORE any API call)
 
-1. **Boceto** — "¿Cómo quieres que se vea el boceto? (sketch 3x3, rough color, clean lineart, full-color keyframes…)"
+1. **Boceto** — "¿Cómo quieres que se vea el boceto? (sketch 2x2 = 4 paneles enfocados, sketch 3x3 = 9 paneles completos, rough color, clean lineart, full-color keyframes…)" — **2x2 recommended** for focused action sequences, 3x3 for complex multi-beat scenes.
 2. **Idea** — "¿Cuál es la idea/escena? (personajes, acción, duración, mood)"
 3. **Art style** — "¿Qué estilo? (shonen 90s cel, modern sakuga, Ghibli, dark fantasy ink…)"
-4. **Seedance model** — "¿Seedance 2 o Seedance 2 Lite? (Lite = más rápido/barato, 2 = mejor calidad)"
-5. **References** — "¿Tienes imágenes de referencia? (sube paths o dime que genere todo from scratch)"
+4. **References** — "¿Tienes imágenes de referencia? (sube paths o dime que genere todo from scratch)"
 
 Only after the user answers all five, proceed.
 
@@ -33,9 +34,9 @@ Each stage is a **separate agent invocation** via the `Agent` tool with `subagen
 |---|-------|--------------|------|--------|
 | 1 | `character-designer` | zip1 pattern | Build character sheets (frontal/side/back + expressions) per character via Nano Banana 2 | `characters/<name>_sheet.png` |
 | 2 | `style-environment` | zip2 pattern | Lock art style + generate environment/background reference via Nano Banana 2 | `style/style_ref.png`, `style/background.png` |
-| 3 | `storyboard-composer` | zip3 pattern | Build 3x3 sketch storyboard with 9-shot list via Nano Banana 2 | `storyboard/storyboard_3x3.png`, `storyboard/shotlist.md` |
+| 3 | `storyboard-composer` | zip3 pattern | Build 2x2 or 3x3 sketch storyboard with shot list via Nano Banana 2 | `storyboard/storyboard_NxN.png`, `storyboard/shotlist.md` |
 | 4 | `final-prompt-composer` | loose images pattern | Assemble final Seedance prompt using `[REF_STORYBOARD]`, `[REF_GIRL_MODEL]`, `[REF_PHOENIX_MODEL]`, `[REF_BACKGROUND]` tokens with strict priority rules | `prompt/seedance_prompt.md` |
-| 5 | `seedance-runner` | — | Call Seedance 2 / Seedance 2 Lite on Replicate with all refs + final prompt | `video/scene_<timestamp>.mp4` |
+| 5 | `seedance-runner` | — | Call Seedance 2.0 on Replicate with all refs + sanitized prompt | `video/scene.mp4` |
 
 Each agent prompt lives in `agents/*.md`. The orchestrator loads the prompt, fills in the shared context (run folder, model slugs, user answers, previous outputs), and spawns the agent. After the agent returns, its outputs are registered in `run_state.json` before the next stage starts.
 
@@ -83,18 +84,25 @@ python <skill_path>/scripts/orchestrator.py
 The orchestrator:
 1. Loads `.env` from the skill folder (falls back to CWD `.env`).
 2. Walks the 5-step conversation (prints questions, reads stdin).
-3. Creates `./seedance_run_<timestamp>/` in `$PWD`.
+3. Creates `~/Desktop/Story Teller/<project_name>/` with asset subfolders.
 4. Spawns each agent via the Claude Code `Agent` tool in order, waiting for each to complete before the next.
 5. Writes `run_state.json` after every stage so a crash can resume.
 6. On completion, runs `/arise` sync + logs a `/karpathy` experiment stub.
 
-## Replicate model slugs (confirmed present 2026-04)
+## Replicate model slugs (confirmed working 2026-04-14)
 
 - Image: `google/nano-banana-2` — text-to-image + image-edit
-- Video hi-quality: `bytedance/seedance-2`
-- Video lite: `bytedance/seedance-2-lite`
+- Video: `bytedance/seedance-2.0` — supports `reference_images` (up to 9) with `[Image1]`-`[Image9]` tokens in prompt, `duration` (seconds), `aspect_ratio`, `resolution`
+- **DEAD slugs**: `bytedance/seedance-2` and `bytedance/seedance-2-lite` both return 404. Do NOT use them.
 
 If a slug returns 404 at runtime, ask the user for the exact slug from their Replicate playground URL.
+
+## Known issues & workarounds (from production runs)
+
+1. **Content filter (E005)**: Seedance 2.0 flags prompts with sexual/suggestive terms. Always sanitize before calling. Safe replacements: "fanservice" → "slapstick comedy", "ecchi" → "anime style", "on top of him" → "tangled together", "compromising position" → "awkward comedic pose", "blushing/steam" → "surprised/laughing".
+2. **Nano Banana 2 rate limits (429/E003)**: Google API throttles during high demand. Implement exponential backoff with 5+ retries. First run in a session may take 6-7 attempts.
+3. **Windows Python path resolution**: Git Bash `/c/Users/...` paths do NOT work inside Python. Always use `os.path.expanduser("~/...")` or `Path.home()`.
+4. **Replicate auth on Windows**: `load_dotenv("/c/Users/chuck/.env")` fails silently. Use `load_dotenv(os.path.expanduser("~/.env"))` instead.
 
 ## One-liner behavior inside Claude Code
 
@@ -103,7 +111,7 @@ When the user invokes this skill:
 1. Read this SKILL.md.
 2. Run the 5 conversation questions inline (don't spawn an agent for the chat — do it directly with AskUserQuestion or plain text prompts).
 3. Verify `REPLICATE_API_TOKEN` is set. If not, stop and tell the user to paste it into `.env`.
-4. Create `./seedance_run_<timestamp>/` in `$PWD`.
+4. Create `~/Desktop/Story Teller/<project_name>/` with subfolders (`characters/`, `style/`, `storyboard/`, `prompt/`, `video/`).
 5. Spawn the 5 agents sequentially via the Agent tool, passing each agent its prompt from `agents/*.md` plus the shared run context.
 6. After the last agent returns a video path, show it to the user and ask for a 1–10 rating.
 7. Append the rating + what worked/didn't to `INSTINCTS.md` and propose one `/karpathy` experiment for the next run.

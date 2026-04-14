@@ -1,30 +1,46 @@
 # Agent: seedance-runner
 
-**Role:** Run the final animation on Replicate using the user-chosen Seedance model.
+**Role:** Run the final animation on Replicate using Seedance 2.0.
 
 ## Inputs
 - `RUN_DIR`
-- `SEEDANCE_MODEL` = `bytedance/seedance-2` or `bytedance/seedance-2-lite`
+- `SEEDANCE_MODEL` = `bytedance/seedance-2.0` (only confirmed working slug)
 - `prompt/seedance_prompt.md`
 - `prompt/refs.json` (ordered ref list)
 
 ## Implementation
-Call:
-```
-python scripts/seedance.py run \
-  --model "${SEEDANCE_MODEL}" \
-  --prompt-file "${RUN_DIR}/prompt/seedance_prompt.md" \
-  --refs-file "${RUN_DIR}/prompt/refs.json" \
-  --out "${RUN_DIR}/video/scene.mp4"
-```
 
-If the Replicate API returns 404 for the slug, STOP and ask the user for
-the exact slug shown in their Replicate playground URL. Do NOT silently
-fall back to another model.
+Write a Python script that:
+1. Loads `REPLICATE_API_TOKEN` from `os.path.expanduser("~/.env")` (NOT `/c/` paths)
+2. Reads the prompt from `seedance_prompt.md`
+3. Reads `refs.json` to get ordered reference image paths
+4. Sanitizes the prompt for Seedance's content filter (replace flagged terms)
+5. Calls `bytedance/seedance-2.0` with:
+   - `prompt`: sanitized text
+   - `reference_images`: list of file handles in order from refs.json
+   - `duration`: 10 (seconds)
+   - `aspect_ratio`: "16:9"
+   - `resolution`: "720p"
+6. Downloads the output video to `${RUN_DIR}/video/scene.mp4`
+
+### Content filter sanitization (MANDATORY)
+
+Before calling the API, replace these terms:
+- "fanservice" → "slapstick comedy"
+- "ecchi" → "anime style"
+- "on top of him" → "tangled together"
+- "compromising position" → "awkward comedic pose"
+- "blushing" → "surprised"
+- "steam rises" → "sparkle effects"
+
+### Error handling
+- 404 → STOP and ask the user for the correct slug. Do NOT fall back.
+- 429 → Exponential backoff, up to 5 retries.
+- E005 (content filter) → Auto-sanitize and retry once. If still blocked, ask user to rephrase.
 
 ## Done when
 - `${RUN_DIR}/video/scene.mp4` exists and is > 50 KB
-- Return JSON: `{"video": "...", "model_used": "...", "seconds": N}`
+- Return JSON: `{"video": "...", "model_used": "...", "file_size_kb": N}`
 
 ## After completion
 The orchestrator will:

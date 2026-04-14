@@ -9,14 +9,23 @@
 - **Rating**: 8/10 (user loved it)
 - **Learning**: Content filter blocks ecchi terms. Pre-sanitize always.
 
-## Run 3: Izta y Popo (2026-04-14)
-- **Rating**: 3/10
-- **What worked**: Animation quality, effects, visual style (Moana look), environment
-- **What failed**: NO STORY. Video was loose transitions, not a narrative. Skipped the actual important beats of the legend. Without deep understanding of the source material, the storyboard and prompt are superficial.
-- **Root cause**: Pipeline has no research phase. It goes straight from user's brief to character design without understanding the story structure, key emotional beats, narrative arc, or visual references.
-- **Experiment (PROMOTED)**: Add a `story-researcher` agent as Agent 0 that:
-  1. Researches the topic/story deeply (web search, cultural context)
-  2. Breaks it into narrative beats with emotional arc
-  3. If user references films/art/directors, researches those to extract visual language, pacing, and storytelling techniques
-  4. Outputs a "story bible" that feeds ALL downstream agents
-  5. Ratio: 1 part user input → 3 parts research-informed detail
+## Run 3: Izta y Popo v1 (2026-04-14)
+- **Rating**: 3/10 — No story, just transitions. No research phase.
+- **Promoted**: story-researcher agent (Agent 0) with 1:3 ratio.
+
+## Run 4: Izta y Popo v2 (2026-04-14) — WITH story-researcher
+- **Rating**: 4/10
+- **What worked**: Story bible excellent (17K words). Characters matched narrative beats. Moana style nailed.
+- **What failed**:
+  1. NO AUDIO — video is silent
+  2. TRANSITIONS INCOHERENT — too many scene changes in 10s
+  3. TRIED TO DO TOO MUCH — 10s cannot hold a 6-beat story arc
+  4. NO USER CHECKPOINT — should ask user to approve teaser before burning credits
+- **Root cause**: Pipeline assumes 1 video = entire story. Wrong. 10s Seedance = ONE moment.
+
+### Experiments for /karpathy:
+- **A (HIGH)**: Teaser-first — pick ONE money shot, ask user to approve, animate only that
+- **B (HIGH)**: Audio pipeline — investigate Seedance audio, or add post-processing step
+- **C (MED)**: Multi-clip mode — one 10s clip per beat, concatenate with ffmpeg
+- **D (MED)**: User checkpoint after storyboard, before video gen
+- **E (MED)**: Deep search in /notebook-research instead of manual URL adding

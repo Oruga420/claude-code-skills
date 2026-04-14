@@ -16,20 +16,21 @@ Production run #3 (Izta y Popo, 2026-04-14) scored 3/10 because the pipeline jum
 
 ## Research phases
 
-### Phase 0: Create a NotebookLM knowledge base (via /notebook-research)
+### Phase 0: Create a NotebookLM knowledge base (via /notebook-research with DEEP SEARCH)
 
-Before any web searching, invoke the `/notebook-research` skill to create a dedicated notebook for this project. This becomes the persistent knowledge base for the entire research phase.
+Before any manual web searching, invoke the `/notebook-research` skill to create a dedicated notebook and use its **deep search** capability to automatically find and ingest sources.
 
 1. **Create notebook** — name it `"Seedance: {PROJECT_NAME}"` (e.g., `"Seedance: Izta y Popo"`)
-2. **Add sources** — for each research topic, find the best web articles/pages and add them as sources to the notebook:
-   - The story/legend itself (Wikipedia, cultural sites, academic sources — at least 3 sources)
-   - Each referenced film/director/art style (film analysis articles, director interviews, visual breakdowns)
-   - Cultural symbolism relevant to the story (art history, mythology databases)
+2. **Run deep search** — instead of manually finding and adding URLs, tell NotebookLM to deep-search the topics:
+   - Deep search: the story/legend/topic itself
+   - Deep search: each referenced film, director, or art style the user mentioned
+   - Deep search: cultural symbolism and visual motifs relevant to the story
+   - NotebookLM finds the best sources automatically — no manual URL curation needed
 3. **Query the notebook** — use NotebookLM's chat to ask structured questions:
    - "What is the complete narrative arc of this story? List every beat in order."
    - "What are the key cultural symbols and their meaning?"
    - "What visual storytelling techniques does [referenced film] use for emotional moments?"
-   - "What are the must-have iconic visual moments that any adaptation should include?"
+   - "What is the single most iconic, cinematic moment in this story — the ONE image that captures the entire narrative?"
    - "How does [referenced director] use color, camera, and pacing to tell stories?"
 4. **Generate audio overview** (optional) — if the story is complex, generate a NotebookLM audio overview to capture nuances that text summaries miss.
 
@@ -98,11 +99,23 @@ For each character:
 - Colors with cultural meaning
 - Motifs that reinforce the theme
 
-## Storyboard recommendation
-Based on the narrative beats:
-- Recommended grid: 2x2 (4 beats) or 3x3 (more complex)
-- Which beats map to which panels
-- The ONE panel that must be perfect (the money shot)
+## MONEY SHOT — The 10-Second Teaser (MOST CRITICAL OUTPUT)
+10 seconds of Seedance video = ONE iconic moment, NOT a full story.
+Pick the single most cinematic, emotional, visually stunning beat and describe it in detail:
+- **Which beat**: (e.g., "Beat 5 — The Transformation")
+- **What the camera sees for 10 seconds**: A single continuous moment, no scene changes
+- **Opening frame**: What we see at second 0
+- **Motion/action**: What moves/changes over the 10 seconds
+- **Closing frame**: What we see at second 10
+- **Color palette**: The dominant colors for this moment
+- **Why this beat**: Why it's the best single image to represent the entire story
+- **Moana/reference parallel**: The exact scene from the reference that matches
+
+## Full storyboard recommendation (for multi-clip mode only)
+If the user requests multi-clip mode:
+- Which beats map to which clips
+- Recommended order
+- Transition notes between clips
 ```
 
 ## Also output: `${RUN_DIR}/research/refs_analysis.md` (if user gave references)

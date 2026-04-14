@@ -21,38 +21,56 @@ Research-first pipeline that turns a verbal concept into a fully animated scene 
 
 1. **Idea** — "¿Cuál es la idea/historia/escena? (personajes, acción, duración, mood)"
 2. **Art style + inspirations** — "¿Qué estilo? Y si tienes referencias de películas, directores, anime, o arte, dímelas — las investigo a fondo para extraer su lenguaje visual." Examples: "estilo Moana", "como Villeneuve filma Dune", "Ghibli meets Orozco murals"
-3. **Boceto** — "¿Sketch 2x2 (4 paneles enfocados) o 3x3 (9 paneles completos)?" — **2x2 recommended** for focused action, 3x3 for epic multi-act stories.
-4. **Image references** — "¿Tienes imágenes de referencia? (sube paths o genero todo from scratch con Nano Banana 2)"
+3. **Image references** — "¿Tienes imágenes de referencia? (sube paths o genero todo from scratch con Nano Banana 2)"
 
-Only after the user answers all four, proceed. Note: the Seedance model question was removed — only `bytedance/seedance-2.0` works.
+Only after the user answers all three, proceed.
 
-## Pipeline (6-agent, research-first)
+**IMPORTANT — boceto grid size is no longer asked.** The pipeline always uses 1x1 (single panel = the money shot). See "Teaser-first principle" below.
 
-Each stage is a **separate agent invocation** via the `Agent` tool. The orchestrator is this skill itself. **Agent 0 is the most important** — it produces the story bible that feeds every downstream agent.
+## Teaser-first principle (CRITICAL — learned from Run 4, rating 4/10)
+
+**10 seconds of Seedance video = ONE iconic moment, NOT a full story.**
+
+Trying to compress a 6-beat narrative into 10s produces incoherent transitions. Instead:
+1. The story-researcher identifies the full narrative arc BUT flags the **ONE money shot** — the single most cinematic, emotional, iconic moment.
+2. The storyboard-composer generates a **single 1x1 keyframe** of that money shot (NOT a multi-panel grid).
+3. The prompt-composer writes a prompt focused on animating THAT SINGLE MOMENT with maximum visual quality.
+4. **USER CHECKPOINT**: Before generating the video, STOP and show the user:
+   - The story bible summary (3-5 lines)
+   - The proposed money shot description
+   - The keyframe image
+   - Ask: "This is what the 10s teaser will animate. Proceed, pick a different beat, or request multi-clip mode?"
+5. Only after user approval, generate the video.
+
+**Multi-clip mode** (user must explicitly request): For full stories, generate one 10s clip PER beat and concatenate with ffmpeg. This is expensive and slow — default is always single-teaser.
+
+## Pipeline (7-agent, research-first, teaser-focused)
+
+Each stage is a **separate agent invocation** via the `Agent` tool. The orchestrator is this skill itself.
 
 | # | Agent | Role | Output |
 |---|-------|------|--------|
-| **0** | **`story-researcher`** | **Deep-research the story, references, and visual inspirations. Break into narrative beats. 1:3 ratio: 1 part user input → 3 parts research.** | **`research/story_bible.md`, `research/refs_analysis.md`** |
+| **0** | **`story-researcher`** | **Deep-research via /notebook-research deep search. Break into beats. Flag the ONE money shot.** | **`research/story_bible.md`, `research/refs_analysis.md`** |
 | 1 | `character-designer` | Build character sheets informed by story bible's character insights | `characters/<name>_sheet.png` |
 | 2 | `style-environment` | Lock art style + environment informed by story bible's visual language section | `style/style_ref.png`, `style/background.png` |
-| 3 | `storyboard-composer` | Build storyboard from story bible's narrative beats (NOT from raw user idea) | `storyboard/storyboard_NxN.png`, `storyboard/shotlist.md` |
-| 4 | `final-prompt-composer` | Assemble Seedance prompt using story bible + all image refs | `prompt/seedance_prompt.md` |
+| 3 | `storyboard-composer` | Generate a **single 1x1 keyframe** of the money shot (NOT a multi-panel grid) | `storyboard/keyframe.png`, `storyboard/shotlist.md` |
+| — | **USER CHECKPOINT** | **Show storyboard + money shot to user. WAIT for approval before continuing.** | User says "go" or picks different beat |
+| 4 | `final-prompt-composer` | Assemble Seedance prompt for the SINGLE money shot moment | `prompt/seedance_prompt.md` |
 | 5 | `seedance-runner` | Call Seedance 2.0 with sanitized prompt + refs | `video/scene.mp4` |
 
 ### Execution order
-- **Agent 0** runs first (research only, no API calls — uses WebSearch + WebFetch)
+- **Agent 0** runs first (research only — uses /notebook-research deep search + WebSearch)
 - **Agents 1 + 2** can run **in parallel** (both read from story bible but are independent)
 - **Agent 3** runs after 1 + 2 (needs character sheets for proportion lock)
-- **Agent 4** runs after 3 (needs storyboard + all image assets)
+- **USER CHECKPOINT** — orchestrator STOPS and presents the teaser concept to the user
+- **Agent 4** runs after user approval
 - **Agent 5** runs last (needs final prompt + all refs)
 
 ### The 1:3 research ratio
 
 This is the core principle. When the user says "la leyenda de Izta y Popo en estilo Moana":
 - **1 part** = user's brief (the legend, Moana style)
-- **3 parts** = story-researcher adds: full mythological arc with 5+ narrative beats, emotional spine (eternal love + sacrifice), Aztec cultural symbols (eagle warriors, jade, obsidian, Quetzalcoatl), Moana's specific storytelling techniques (how it uses ocean as metaphor, its color shifts for emotional beats, Te Fiti transformation sequence as parallel), camera language from the reference film, must-have iconic moments
-
-Without this ratio, the video is wallpaper. With it, the video tells a story.
+- **3 parts** = story-researcher adds: full mythological arc with 5+ narrative beats, emotional spine, cultural symbols, reference film techniques, and most importantly: **which single moment best represents the entire story as a 10-second teaser**
 
 Each agent prompt lives in `agents/*.md`. Every agent downstream of story-researcher receives the story bible as context.
 
@@ -128,11 +146,17 @@ If a slug returns 404 at runtime, ask the user for the exact slug from their Rep
 When the user invokes this skill:
 
 1. Read this SKILL.md.
-2. Run the 4 conversation questions inline (idea, style+inspirations, boceto, image refs).
+2. Run the 3 conversation questions inline (idea, style+inspirations, image refs).
 3. Verify `REPLICATE_API_TOKEN` is set. If not, stop and tell the user to paste it into `.env`.
 4. Create `~/Desktop/Story Teller/<project_name>/` with subfolders (`research/`, `characters/`, `style/`, `storyboard/`, `prompt/`, `video/`).
-5. **Spawn Agent 0 (story-researcher)** — pass USER_IDEA, USER_ART_STYLE, and any film/director/art references. Wait for story bible.
-6. **Spawn Agents 1 + 2 in parallel** — both receive the story bible as context alongside user answers.
-7. **Spawn Agents 3 → 4 → 5 sequentially** — storyboard reads story bible's narrative beats (NOT raw user idea), prompt composer reads story bible + all images, runner generates video.
-8. After the last agent returns a video path, show it to the user and ask for a 1–10 rating.
-9. Append the rating + what worked/didn't to `INSTINCTS.md` and propose one `/karpathy` experiment for the next run.
+5. **Spawn Agent 0 (story-researcher)** — pass USER_IDEA, USER_ART_STYLE, and any film/director/art references. Wait for story bible. Story bible MUST include a "Money Shot" section identifying the ONE best moment for a 10s teaser.
+6. **Spawn Agents 1 + 2 in parallel** — both receive the story bible as context.
+7. **Spawn Agent 3** — generates a SINGLE keyframe of the money shot (1x1, not a grid).
+8. **USER CHECKPOINT** — STOP. Show the user:
+   - Story bible summary (3-5 lines)
+   - The proposed money shot (description + keyframe image)
+   - Ask: "Este es el teaser de 10s. ¿Le doy, elijo otro beat, o modo multi-clip?"
+   - WAIT for user response before continuing.
+9. **Spawn Agents 4 → 5** — prompt composer writes for the SINGLE moment, runner generates video.
+10. After the video, show it and ask for a 1–10 rating.
+11. Append the rating + what worked/didn't to `INSTINCTS.md` and propose one `/karpathy` experiment.
